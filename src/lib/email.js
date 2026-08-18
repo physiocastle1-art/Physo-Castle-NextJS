@@ -16,6 +16,11 @@ const esc = (v) =>
 const escList = (v) =>
   (Array.isArray(v) ? v : [v]).filter(Boolean).map(esc).join(", ");
 
+/* The same join WITHOUT escaping — for the plain-text part, where "&" is
+   just an ampersand and "&amp;" would be the bug. */
+const plainList = (v) =>
+  (Array.isArray(v) ? v : [v]).filter(Boolean).map((x) => String(x)).join(", ");
+
 /* CR/LF in a header is how header injection adds a Bcc:. Strip them. */
 const escHeader = (v) => String(v ?? "").replace(/[\r\n]+/g, " ").trim().slice(0, 200);
 
@@ -150,9 +155,9 @@ export async function sendLeadEmail(leadData) {
     lead.age ? `Age:      ${lead.age}` : null,
     lead.gender ? `Gender:   ${lead.gender}` : null,
     lead.address ? `Address:  ${lead.address}` : null,
-    `Areas:    ${formattedParts}`,
+    `Areas:    ${plainList(parts) || "Not specified"}`,
     lead.complaint ? `Complaint: ${lead.complaint}` : null,
-    `Timings:  ${formattedSlots}`,
+    `Timings:  ${plainList(slots) || "Any time"}`,
     lead.notes ? `\nNotes:\n${lead.notes}` : null,
   ]
     .filter((v) => v !== null)
