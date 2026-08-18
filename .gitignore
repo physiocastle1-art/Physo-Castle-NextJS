@@ -5,11 +5,12 @@
 /.next
 /out
 
-# env — NEVER commit real credentials
+# env — NEVER commit real credentials.
+# .env*.local already covers .env.local; .env.example is a TEMPLATE of
+# placeholders with no secrets in it, and both README.md and ADMIN.md tell you
+# to copy it, so it has to be in the repo.
 .env
 .env*.local
-.env.local
-.env.example
 
 # misc
 .DS_Store
