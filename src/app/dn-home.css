@@ -1,0 +1,541 @@
+/* =====================================================================
+   HOMEPAGE — the Dantora composition, its palette and its motion, set in
+   Physio Castle's typefaces.
+
+   Everything here is prefixed .dn- so it cannot collide with globals.css.
+   COLOUR is the reference's: mint panels, brand green, lime accents.
+   TYPE is the site's: Fraunces display + Inter body, and .title / .lede /
+   .eyebrow / .btn are reused, only recoloured onto the mint.
+
+   --u is the artboard unit. The reference scales the ROOT font-size above 1024
+   (16 * 100 / 1440 = 1.111111vw) so an absolutely-positioned 1440 composition
+   tracks the viewport. We cannot touch the root here — it would rescale the
+   nav, the footer and the kept Scratch/FAQ blocks — so the same ladder lives in
+   a local custom property instead: calc(N * var(--u)) == N rem on the artboard.
+   ===================================================================== */
+
+.dn-sec,
+.dn-runway,
+.dn-chain {
+  --u: 1rem;
+
+  /* Dantora brand ramp */
+  --dn-mint-50: #eff4f2;
+  --dn-mint-100: #e5f1ed;
+  --dn-brand-500: #246f65;
+  --dn-brand-900: #054038;
+  --dn-lime-200: #f8ffb4;
+  --dn-lime-400: #e5ed9b;
+
+  --dn-line: rgba(0, 0, 0, 0.1);
+  --dn-muted: rgba(0, 0, 0, 0.4);
+  --dn-subtle: rgba(0, 0, 0, 0.5);
+  --dn-glass: rgba(255, 255, 255, 0.8);
+  --dn-glass-subtle: rgba(255, 255, 255, 0.5);
+  --dn-glass-strong: rgba(255, 255, 255, 0.9);
+
+  --dn-corner-section: 28px;
+  --dn-corner-card: 20px;
+}
+@media (min-width: 1024px) {
+  .dn-sec,
+  .dn-runway,
+  .dn-chain {
+    --u: 1.111111vw;
+    --dn-corner-section: calc(3 * var(--u));
+    --dn-corner-card: calc(1.5 * var(--u));
+  }
+}
+
+.dn-sec { position: relative; width: 100%; color: var(--ink); }
+.dn-chain { position: relative; }        /* contains the sticky panels' travel */
+.dn-page { position: relative; background: #ffffff; }
+
+/* the site's scrolled header is cream; over mint panels that reads as a warm
+   bar sitting on a cool page. Frosted white only on pages carrying these blocks. */
+body:has(.dn-sec) .nav.scrolled {
+  background: rgba(255, 255, 255, 0.82);
+  border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+
+/* ── shared type (site typefaces, reference colours) ───────────────────── */
+.dn-h1 {
+  font-family: var(--serif);
+  font-weight: 300;
+  font-size: clamp(2.3rem, 4.4vw, 4rem);
+  line-height: 1.04;
+  letter-spacing: -0.015em;
+}
+.dn-h1 em,
+.dn-sec .title em { font-style: italic; color: var(--dn-brand-500); }
+.dn-lead { font-size: clamp(0.98rem, 1.15vw, 1.08rem); color: var(--dn-subtle); font-weight: 300; line-height: 1.55; }
+.dn-lead strong { color: var(--ink); font-weight: 500; }
+.dn-sec .lede { color: var(--dn-subtle); }
+.dn-muted { color: var(--dn-muted); }
+.dn-hair { display: block; width: calc(3.125 * var(--u)); height: 1px; background: var(--dn-brand-500); }
+
+/* the eyebrow keeps the site's caps-and-rule styling, in the brand green */
+.dn-sec .eyebrow { color: var(--dn-brand-500); }
+.dn-sec .eyebrow::before { background: var(--dn-brand-500); }
+.eyebrow > .dn-split { display: inline-flex; }
+.eyebrow--light, .dn-sec .eyebrow--light { color: rgba(255, 255, 255, 0.8); }
+.dn-sec .eyebrow--light::before { background: rgba(255, 255, 255, 0.6); }
+
+/* the word engine's container is a flex row: text-align alone positions nothing */
+.dn-split { display: flex; flex-wrap: wrap; column-gap: 0.25em; position: relative; }
+.dn-split.is-center { justify-content: center; text-align: center; }
+.dn-word { display: inline-block; will-change: transform, opacity, filter; }
+.dn-reveal-el { will-change: transform, opacity, filter; }
+
+.dn-scene { position: relative; }
+.dn-scene canvas { display: block; width: 100%; height: 100%; }
+
+/* ── buttons: the site's pill, the reference's two fills ───────────────── */
+.dn-sec .btn-gold {
+  background: var(--dn-brand-500);
+  border: 1px solid var(--dn-brand-900);
+  color: #fff;
+}
+.dn-sec .btn-gold:hover { background: var(--dn-brand-900); box-shadow: none; }
+.dn-sec .btn-ghost {
+  background: var(--dn-lime-200);
+  border: 1px solid var(--dn-lime-400);
+  color: #000;
+}
+.dn-sec .btn-ghost:hover { background: var(--dn-lime-400); border-color: var(--dn-lime-400); color: #000; }
+
+.dn-arw { width: 14px; height: 14px; flex: 0 0 auto; }
+.dn-ring {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: calc(3.6 * var(--u)); height: calc(3.6 * var(--u));
+  min-width: 44px; min-height: 44px;
+  border-radius: 50%; border: 1px solid currentColor; background: none; flex: 0 0 auto;
+  transition: 0.4s var(--ease);
+}
+/* flex-end, not `end`: the label sits on the row's baseline next to the ring */
+.dn-card__cta { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem;
+  font-size: 0.82rem; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 500; }
+.dn-card__cta:hover .dn-ring { transform: translate(2px, -2px); }
+
+/* ── hero ──────────────────────────────────────────────────────────────── */
+/* the panel colour must equal the scene's clear colour or the canvas paints a
+   differently-tinted rectangle over the panel */
+.dn-hero {
+  background: var(--dn-mint-50);
+  border-radius: 0 0 var(--dn-corner-section) var(--dn-corner-section);
+  overflow: hidden;
+  min-height: 100svh;
+  display: flex; flex-direction: column; gap: 1.4rem;
+  padding: 7.5rem 1.25rem 3rem;
+}
+.dn-hero__copy { display: flex; flex-direction: column; gap: 1.3rem; z-index: 10; }
+/* z-index is load-bearing: the canvas comes after the copy in the DOM */
+.dn-hero__scene { width: 100%; height: 38svh; flex: 0 0 auto; }
+.dn-hero__rule { height: 1px; background: var(--dn-line); width: 100%; }
+.dn-hero__trust { display: flex; flex-direction: column; gap: 0.8rem; }
+.dn-hero__chips { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.dn-chip {
+  border-radius: 37px; border: 1px solid var(--dn-line);
+  background: var(--dn-glass-subtle); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  padding: calc(0.85 * var(--u)) calc(1.5 * var(--u));
+  font-size: 0.78rem; letter-spacing: 0.06em; color: var(--ink); white-space: nowrap;
+}
+.dn-hero__actions { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+
+@media (min-width: 1024px) {
+  .dn-hero { display: block; height: 100lvh; padding: 0; }
+  .dn-hero__copy { position: absolute; top: 28.55%; left: calc(2.5 * var(--u)); width: calc(44.75 * var(--u)); }
+  .dn-hero__copy .dn-lead { width: calc(30.875 * var(--u)); }
+  .dn-hero__scene { position: absolute; top: 0; bottom: 0; left: calc(22.5625 * var(--u)); width: calc(71.25 * var(--u)); height: auto; }
+  .dn-hero__rule { position: absolute; top: 78.625%; left: calc(2.5625 * var(--u)); right: calc(2.5 * var(--u)); width: auto; }
+  .dn-hero__trust { position: absolute; top: 83.625%; left: calc(2.5 * var(--u)); }
+  /* narrower than the 31.9375 artboard block: the site's floating WhatsApp /
+     chatbot / booking column owns the right ~80px and the chips wrapped under it */
+  .dn-hero__chips { position: absolute; top: 83.625%; left: calc(55.5625 * var(--u)); width: calc(27.5 * var(--u)); }
+  .dn-hero__actions { position: absolute; top: 89.375%; left: calc(2.5 * var(--u)); }
+}
+
+/* ── why: one viewport of plain white between two mint panels ──────────── */
+.dn-why {
+  background: #ffffff;
+  min-height: 100svh;
+  display: flex; align-items: center; justify-content: center;
+  /* clips the trail: without it a card spawned near an edge spills over the hero */
+  overflow: hidden;
+  padding: 6rem 1.25rem;
+}
+.dn-why__copy {
+  position: relative; z-index: 2;
+  width: min(100% - 2.5rem, calc(44.75 * var(--u)));
+  display: flex; flex-direction: column; align-items: center; gap: 2rem; text-align: center;
+}
+.dn-why__title { width: min(100%, calc(39.25 * var(--u))); }
+.dn-why__lede { width: min(100%, calc(28.5 * var(--u))); max-width: none; }
+.dn-why__actions { display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: center; }
+@media (min-width: 1024px) { .dn-why { min-height: 100lvh; } .dn-why__copy { gap: 3rem; } }
+
+.dn-trail { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.dn-trail__card {
+  position: absolute; top: 0; left: 0;
+  width: calc(13.5 * var(--u)); height: calc(17 * var(--u));
+  border-radius: var(--dn-corner-card); overflow: hidden;
+  will-change: transform, opacity;
+}
+.dn-trail__card img { width: 100%; height: 100%; object-fit: cover; }
+
+/* ── services runway ──────────────────────────────────────────────────── */
+.dn-runway { position: relative; height: 400lvh; z-index: 1; }
+.dn-svc {
+  position: sticky; top: 0; height: 100lvh; overflow: hidden;
+  background: var(--dn-mint-50);
+  border-radius: var(--dn-corner-section) var(--dn-corner-section) 0 0;
+  display: flex; flex-direction: column; gap: 1.2rem;
+  padding: 7rem 1.25rem 2rem;
+}
+.dn-svc__rail { position: relative; flex: 1 1 auto; overflow: hidden; }
+.dn-svc__track { display: flex; gap: calc(0.625 * var(--u)); height: 100%; will-change: transform; }
+
+.dn-card {
+  flex: 0 0 auto; height: 100%; position: relative; overflow: hidden;
+  border-radius: var(--dn-corner-card);
+  padding: calc(1.6 * var(--u));
+  display: flex; flex-direction: column;
+  width: 78vw; max-width: 22rem;
+}
+.dn-card__idx { position: relative; z-index: 2; font-family: var(--serif); font-size: 1.1rem; opacity: 0.75; }
+.dn-card__body { margin-top: auto; position: relative; z-index: 2; display: flex; flex-direction: column; gap: 1.2rem; }
+.dn-card__title { font-family: var(--serif); font-weight: 400; font-size: clamp(1.3rem, 2.05vw, 1.95rem); line-height: 1.08; }
+.dn-card__list li {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  padding: 0.85rem 0; border-top: 1px solid rgba(0, 0, 0, 0.16);
+  font-size: 0.86rem; color: #000;
+}
+.dn-card--lime { background: var(--dn-lime-200); outline: 1px solid var(--dn-lime-400); outline-offset: -1px; color: #000; }
+.dn-card--tail { background: var(--dn-lime-200); outline: 1px solid var(--dn-lime-400); outline-offset: -1px; color: #000; }
+.dn-card--brand { background: var(--dn-brand-500); color: #fff; }
+.dn-card--photo { color: #fff; }
+.dn-card--brand .dn-card__title,
+.dn-card--photo .dn-card__title { color: #fff; }
+.dn-card--photo::after {
+  content: ""; position: absolute; inset: 0; z-index: 1;
+  background: linear-gradient(180deg, rgba(5, 64, 56, 0.1), rgba(5, 64, 56, 0.68));
+}
+.dn-card__img { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; object-fit: cover; }
+
+@media (min-width: 1024px) {
+  .dn-svc { display: block; padding: 0; }
+  .dn-svc__head { position: absolute; top: 14%; left: calc(2.5 * var(--u)); width: calc(46 * var(--u)); }
+  .dn-svc__eyebrow { position: absolute; top: 14%; left: calc(66.75 * var(--u)); width: calc(20.75 * var(--u)); }
+  .dn-svc__desc { position: absolute; top: 21%; left: calc(66.75 * var(--u)); width: calc(20.75 * var(--u)); }
+  .dn-svc__desc .lede { font-size: 0.98rem; max-width: none; }
+  .dn-svc__rail { position: absolute; top: 41%; right: 0; bottom: calc(2.5 * var(--u)); left: calc(2.5 * var(--u)); width: calc(85 * var(--u)); }
+  .dn-card { max-width: none; width: calc(27.9375 * var(--u)); }
+  .dn-card--wide { width: calc(35.0625 * var(--u)); }   /* the card carrying the list */
+  .dn-card--tail { width: calc(23 * var(--u)); }
+}
+
+/* ── about (rides up over the pinned services panel) ──────────────────── */
+.dn-about {
+  margin-top: -100lvh; z-index: 10;
+  background: var(--dn-mint-100);
+  border-radius: var(--dn-corner-section) var(--dn-corner-section) 0 0;
+  display: flex; flex-direction: column; gap: 2.5rem;
+  padding: 4rem 1.25rem 4rem;
+}
+.dn-about__banner {
+  position: relative; overflow: hidden; border-radius: var(--dn-corner-card);
+  height: 15rem; margin: 0;
+}
+.dn-about__banner img {
+  position: absolute; left: 0; top: 0; width: 100%; height: 125%;   /* overscan 0.25 */
+  object-fit: cover; will-change: transform;
+}
+.dn-about__row { display: flex; flex-direction: column; gap: 2.5rem; justify-content: space-between; }
+.dn-about__left { display: flex; flex-direction: column; gap: 2rem; }
+.dn-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1.6rem 1.2rem; }
+.dn-stat { border-left: 1px solid var(--dn-brand-500); padding-left: 1.2rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.dn-stat__fig { font-family: var(--serif); font-weight: 300; font-size: clamp(2rem, 3.6vw, 3.1rem); line-height: 1; color: var(--dn-brand-500); }
+.dn-stat__label { font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--dn-subtle); }
+.dn-about__right { display: flex; flex-direction: column; gap: 2rem; }
+.dn-about__para {
+  font-family: var(--serif); font-weight: 300; line-height: 1.18;
+  font-size: clamp(1.3rem, 2.5vw, 2.15rem); color: var(--ink);
+}
+.dn-about__actions { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+
+@media (min-width: 1024px) {
+  .dn-about { display: block; height: calc(71.5 * var(--u)); padding: 0; }
+  .dn-about__banner { position: absolute; top: calc(2.5 * var(--u)); left: calc(2.5 * var(--u)); height: calc(31.25 * var(--u)); width: calc(85 * var(--u)); }
+  .dn-about__row { position: absolute; top: calc(37.75 * var(--u)); left: calc(2.375 * var(--u)); width: calc(85.125 * var(--u)); flex-direction: row; gap: 0; }
+  .dn-about__left { width: calc(28.0625 * var(--u)); }
+  .dn-about__right { width: calc(49.3125 * var(--u)); }
+}
+
+/* ── stories rail (sticky, drag + glide) ──────────────────────────────── */
+.dn-stories {
+  position: sticky; top: 0; height: 100lvh; z-index: 10; overflow: hidden;
+  background: var(--dn-mint-100); padding-top: 6%;
+}
+.dn-stories__box { height: 86%; display: flex; flex-direction: column; gap: 1.4rem; padding: 0 1.25rem; }
+.dn-stories__rail {
+  flex: 1 1 auto; display: flex; gap: calc(0.625 * var(--u));
+  overflow-x: auto; overflow-y: hidden;
+  scroll-behavior: auto;              /* smooth fights the direct scrollLeft writes */
+  touch-action: pan-y;
+  scrollbar-width: none; -ms-overflow-style: none;
+}
+.dn-stories__rail::-webkit-scrollbar { display: none; }
+.dn-stories__rail img { pointer-events: none; }
+.dn-story {
+  flex: 0 0 auto; height: 100%; position: relative; overflow: hidden;
+  border-radius: var(--dn-corner-card); padding: calc(1.6 * var(--u));
+  display: flex; flex-direction: column;
+  width: 74vw; max-width: 20rem;
+}
+.dn-story--intro { background: var(--dn-brand-500); color: #fff; gap: 1.2rem; }
+.dn-story__head { font-family: var(--serif); font-weight: 300; font-size: clamp(1.3rem, 2.05vw, 1.95rem); line-height: 1.1; margin-top: auto; color: inherit; }
+.dn-socials { display: flex; gap: 0.5rem; }
+.dn-socials a {
+  width: calc(3.6 * var(--u)); height: calc(3.6 * var(--u)); min-width: 42px; min-height: 42px;
+  border-radius: 50%; border: 1px solid rgba(255, 255, 255, 0.35);
+  display: flex; align-items: center; justify-content: center; font-size: 0.9rem;
+  transition: 0.4s var(--ease);
+}
+.dn-socials a:hover { background: rgba(255, 255, 255, 0.14); }
+.dn-story--quote { background: #fff; outline: 1px solid var(--dn-line); outline-offset: -1px; }
+.dn-story__stars { color: var(--dn-brand-500); font-size: 0.8rem; letter-spacing: 0.2em; }
+.dn-story__text {
+  margin-top: 1.2rem; font-family: var(--serif); font-weight: 300;
+  font-size: clamp(1rem, 1.35vw, 1.2rem); line-height: 1.32; color: var(--ink);
+}
+/* frosted caption plate over the card */
+.dn-plate {
+  margin-top: auto; position: relative;
+  background: var(--dn-glass); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--dn-line); border-radius: 8px;
+  height: calc(4 * var(--u)); min-height: 62px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 0.35rem;                       /* load-bearing: the two lines collide without it */
+}
+.dn-plate__name { font-size: 0.9rem; font-weight: 500; color: var(--ink); }
+.dn-plate__role { font-size: 0.74rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--dn-subtle); }
+.dn-story--tail { background: var(--dn-lime-200); outline: 1px solid var(--dn-lime-400); outline-offset: -1px; color: #000; }
+.dn-story--tail .dn-story__head { color: #000; }
+.dn-story--tail .dn-card__cta { margin-top: 1.2rem; }
+.dn-bar { position: relative; height: 2px; background: var(--dn-line); flex: 0 0 auto; }
+.dn-bar__fill { position: absolute; inset: 0; background: var(--dn-brand-500); transform-origin: left; transform: scaleX(0.654); }
+
+@media (min-width: 1024px) {
+  .dn-stories__box { padding: 0 calc(2.5 * var(--u)); }
+  .dn-story { max-width: none; width: calc(24 * var(--u)); }
+  .dn-story--intro { width: calc(27.9375 * var(--u)); }
+  .dn-story--tail { width: calc(20.75 * var(--u)); }
+}
+
+/* ── contact (rides up over the stories rail) ─────────────────────────── */
+.dn-contact {
+  position: relative; z-index: 20; overflow: hidden;
+  background: var(--dn-mint-50);      /* == the scene's clear colour */
+  border-radius: var(--dn-corner-section) var(--dn-corner-section) 0 0;
+  min-height: 100svh;
+  display: flex; flex-direction: column; gap: 2rem;
+  padding: 5rem 1.25rem 4rem;
+}
+.dn-contact__copy { position: relative; z-index: 2; display: flex; flex-direction: column; gap: 1.2rem; }
+.dn-contact__scene { display: none; }
+.dn-form {
+  position: relative; z-index: 3;
+  background: var(--dn-glass-strong); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--dn-line); border-radius: var(--dn-corner-card);
+  padding: calc(1.6 * var(--u));
+  display: flex; flex-direction: column; gap: calc(1 * var(--u));
+}
+.dn-form__mark {
+  width: calc(2.625 * var(--u)); height: calc(2.625 * var(--u)); min-width: 38px; min-height: 38px;
+  border-radius: 4px; background: var(--dn-brand-500); color: var(--dn-lime-200);
+  display: flex; align-items: center; justify-content: center;
+}
+.dn-form__mark svg { width: 60%; height: 60%; fill: currentColor; }
+.dn-form__title { font-family: var(--serif); font-weight: 300; font-size: clamp(1.5rem, 2.4vw, 2.1rem); line-height: 1.08; }
+.dn-field { display: flex; flex-direction: column; gap: 0.5rem; }
+.dn-field label { font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--dn-brand-500); font-weight: 600; }
+.dn-field input, .dn-field textarea {
+  font-family: var(--sans); font-size: 0.95rem; font-weight: 300; color: var(--ink);
+  background: transparent; border: 1px solid var(--dn-line); border-radius: 8px;
+  padding: calc(0.95 * var(--u)) calc(1.2 * var(--u));
+  outline: none; resize: none; width: 100%;
+  transition: border-color 0.25s var(--ease);
+}
+.dn-field input:focus, .dn-field textarea:focus { border-color: var(--dn-brand-500); }
+.dn-consent { font-size: 0.76rem; color: var(--dn-subtle); }
+.dn-consent a { text-decoration: underline; }
+.dn-form__ok { font-size: 0.95rem; color: var(--ink); }
+.dn-form__ok a { color: var(--dn-brand-500); text-decoration: underline; }
+.dn-form__submit { margin-top: auto; align-self: flex-start; }
+
+@media (min-width: 1024px) {
+  .dn-contact { display: block; height: 100lvh; padding: 0; }
+  .dn-contact__scene { display: block; position: absolute; top: 0; bottom: 0; left: calc(7.0625 * var(--u)); width: calc(71.125 * var(--u)); z-index: 1; }
+  .dn-contact__copy { position: absolute; top: 35.25%; left: calc(2.5625 * var(--u)); width: calc(42.75 * var(--u)); }
+  .dn-contact__copy .lede { max-width: none; }
+  .dn-form { position: absolute; top: calc(6.5 * var(--u)); right: calc(2.5 * var(--u)); bottom: calc(2.5 * var(--u)); width: calc(35.0625 * var(--u)); }
+  .dn-form__submit { align-self: stretch; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dn-word, .dn-reveal-el { opacity: 1 !important; filter: none !important; transform: none !important; }
+  .dn-about__banner img { height: 100%; }
+}
+
+/* =====================================================================
+   INSTAGRAM WALL
+   Instagram's own embeds, laid out in the reference's zigzag: a 4-up grid
+   where every other card drops by half a card, so the block reads as a
+   wall rather than a table.
+
+   The !important overrides are aimed at inline styles Instagram's embed.js
+   writes onto the blockquote itself (min-width: 326px, max-width: 540px,
+   margin: 1px auto). They cannot be beaten from a stylesheet any other way,
+   and without them a 4-column grid overflows its container below ~1400px.
+   ===================================================================== */
+
+.dn-ig {
+  --dn-ig-cap: 440px;               /* tallest a card may get; see .dn-ig__cell */
+
+  background: var(--dn-mint-50);
+  border-radius: var(--dn-corner-section);
+  padding: calc(4.5 * var(--u)) 0 calc(5 * var(--u));
+  margin: calc(1.5 * var(--u)) 0;
+  overflow: hidden;                      /* the stagger pushes past the pad */
+}
+
+.dn-ig__inner {
+  width: min(100% - 2.5rem, 1180px);
+  margin-inline: auto;
+}
+
+.dn-ig__head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.9rem;
+  margin-bottom: calc(3 * var(--u));
+}
+
+.dn-ig__title {
+  font-family: var(--serif);
+  font-weight: 400;
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  font-size: clamp(2.1rem, 5.2vw, 4.1rem);
+  max-width: 20ch;
+  margin: 0;
+}
+.dn-ig__title em { font-style: italic; color: var(--dn-brand-500); }
+
+.dn-ig__lead { max-width: 46ch; }
+.dn-ig__cta { margin-top: 0.6rem; }
+
+.dn-ig__blocked {
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--dn-subtle);
+  margin-bottom: 1.6rem;
+}
+.dn-ig__blocked a { color: var(--dn-brand-500); text-decoration: underline; }
+
+/* ---- the wall ---- */
+
+.dn-ig__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.15rem;
+  align-items: start;
+}
+
+.dn-ig__cell {
+  min-width: 0;
+  position: relative;
+  /* The cap is on the cell, not the iframe: Instagram rewrites the iframe's
+     inline height whenever it re-processes, and would win. Clipping the tail of
+     the action bar on the tallest reels is the intended trade. */
+  max-height: var(--dn-ig-cap);
+  overflow: hidden;
+  border-radius: var(--dn-corner-card);
+}
+
+/* A card taller than the cap is clipped, and a hard cut reads as a rendering
+   bug. This fades the last few pixels out instead. On a card that is NOT
+   clipped it sits over the embed's own white background and is invisible, so
+   it can be applied unconditionally — CSS cannot know which is which. */
+.dn-ig__cell::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 46px;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0), #fff 78%);
+  pointer-events: none;
+  border-radius: 0 0 var(--dn-corner-card) var(--dn-corner-card);
+}
+/* The placeholder draws its own background — no fade needed over it. */
+.dn-ig__cell:has(.dn-ig__ghost)::after { display: none; }
+
+/* Instagram sizes its own iframe; all this has to do is stop the card
+   fighting the column it lives in. */
+.dn-ig__cell .instagram-media {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  width: 100% !important;
+  margin: 0 !important;
+  border-radius: var(--dn-corner-card) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 18px 40px -28px rgba(5, 64, 56, 0.45) !important;
+  border: 1px solid var(--dn-line) !important;
+}
+.dn-ig__cell iframe.instagram-media { display: block !important; }
+
+/* The un-hydrated blockquote, and the pre-arm placeholder, share a shape so
+   arming the section does not jolt the page height. */
+.dn-ig__cell blockquote.instagram-media:not([data-instgrm-rendered]),
+.dn-ig__ghost {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  aspect-ratio: 1 / 1;
+  max-height: var(--dn-ig-cap);
+  padding: 1.25rem;
+  background: #fff;
+  border: 1px solid var(--dn-line);
+  border-radius: var(--dn-corner-card);
+  color: var(--dn-brand-500);
+  font-size: 0.86rem;
+  text-align: center;
+  text-decoration: none;
+}
+.dn-ig__ghost-mark { font-size: 1.9rem; opacity: 0.5; }
+.dn-ig__ghost-label { color: var(--dn-subtle); }
+.dn-ig__ghost:hover { border-color: var(--dn-brand-500); }
+
+@media (max-width: 639px) {
+  .dn-ig { --dn-ig-cap: 360px; }
+  .dn-ig__grid { max-width: 330px; margin-inline: auto; }
+}
+
+@media (min-width: 640px) {
+  .dn-ig__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+  .dn-ig__cell[data-stagger="down"] { margin-top: calc(1.75 * var(--u)); }
+}
+
+@media (min-width: 1100px) {
+  .dn-ig__grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.1rem; }
+  /* The zigzag: every other card drops, and the grid is pulled up by the same
+     amount so the section keeps its intended top padding. */
+  .dn-ig__cell[data-stagger="down"] { margin-top: calc(3 * var(--u)); }
+  .dn-ig__grid { margin-bottom: calc(-1.5 * var(--u)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dn-ig__cell[data-stagger="down"] { margin-top: 0; }
+}
