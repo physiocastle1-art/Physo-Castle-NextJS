@@ -1,8 +1,20 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
-export default function PublicReviewSection() {
-  const [reviews, setReviews] = useState([]);
+/* The approved reviews are rendered on the SERVER and handed down as
+   `initialReviews` — this component no longer fetches them.
+
+   Why that matters: the old useEffect fired only after React had hydrated, so
+   the section was empty on first paint, the list was invisible to search
+   engines and to anyone with JS disabled, and every visitor paid a database
+   round trip that returns the same rows for all of them. The page now ships
+   the reviews in the HTML, cached and tag-invalidated (see lib/public-data.js).
+
+   Submitting a review stays here, because it is a mutation: it POSTs to the
+   rate-limited route and the new review lands as "pending", so it correctly
+   does not appear in this list until someone approves it. */
+export default function PublicReviewSection({ initialReviews = [] }) {
+  const reviews = initialReviews;
   const [showModal, setShowModal] = useState(false);
   const [name, setName] = useState("");
   const [role, setRole] = useState("");
@@ -11,20 +23,6 @@ export default function PublicReviewSection() {
   const [loading, setLoading] = useState(false);
   const [sentMsg, setSentMsg] = useState("");
   const [error, setError] = useState("");
-
-  const fetchReviews = async () => {
-    try {
-      const res = await fetch("/api/public/reviews");
-      const data = await res.json();
-      if (data.reviews) setReviews(data.reviews);
-    } catch (err) {
-      // ignore
-    }
-  };
-
-  useEffect(() => {
-    fetchReviews();
-  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

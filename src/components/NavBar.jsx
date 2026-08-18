@@ -38,7 +38,8 @@ export default function NavBar() {
     setServicesOpen(false);
   }, [pathname]);
 
-  // Click outside to close dropdown
+  // Click outside to close dropdown ("touchstart" too: a tap fires no mousedown
+  // until it has already resolved, so a touch-only device never closed it)
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -46,8 +47,20 @@ export default function NavBar() {
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("touchstart", handleClickOutside, { passive: true });
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
   }, []);
+
+  /* The mobile panel is a full-screen scroll container. Without freezing the
+     page underneath it, a drag inside the menu scrolls the article behind it
+     and the menu appears to stick. */
+  useEffect(() => {
+    document.body.classList.toggle("nav-open", open);
+    return () => document.body.classList.remove("nav-open");
+  }, [open]);
 
   return (
     <>
@@ -73,17 +86,24 @@ export default function NavBar() {
             onMouseEnter={() => setServicesOpen(true)}
             onMouseLeave={() => setServicesOpen(false)}
           >
-            <button
-              type="button"
-              className={`nav-dropdown-trigger ${pathname.startsWith("/services") ? "active" : ""}`}
-              onClick={() => setServicesOpen((v) => !v)}
-              aria-expanded={servicesOpen}
-            >
-              <Link href="/services" style={{ color: "inherit", textDecoration: "none" }}>
+            {/* The label used to be a <Link> nested inside a <button> — invalid
+                markup, and on a phone the whole row navigated, so the submenu
+                was only reachable by hitting the arrow glyph itself. They are
+                siblings now: the label goes to /services, the arrow expands. */}
+            <div className={`nav-dropdown-trigger ${pathname.startsWith("/services") ? "active" : ""}`}>
+              <Link href="/services" className="nav-dropdown-label">
                 Services
               </Link>
-              <span className={`nav-arw ${servicesOpen ? "up" : ""}`}>▾</span>
-            </button>
+              <button
+                type="button"
+                className="nav-dropdown-arw-btn"
+                onClick={() => setServicesOpen((v) => !v)}
+                aria-expanded={servicesOpen}
+                aria-label={servicesOpen ? "Hide service list" : "Show service list"}
+              >
+                <span className={`nav-arw ${servicesOpen ? "up" : ""}`}>▾</span>
+              </button>
+            </div>
 
             {servicesOpen ? (
               <div className="nav-dropdown-menu">
@@ -127,6 +147,12 @@ export default function NavBar() {
           <Link href="/contact" className={pathname === "/contact" ? "active" : ""}>
             Contact
           </Link>
+
+          {/* .nav-cta is display:none under 920px — this is the same action,
+              styled for the panel, so the primary CTA survives on a phone */}
+          <Link href="/contact" className="nav-links-cta">
+            Book Appointment
+          </Link>
         </div>
 
         <Link href="/contact" className="nav-cta">
@@ -153,27 +179,32 @@ export default function NavBar() {
         .nav-dropdown-trigger {
           display: inline-flex;
           align-items: center;
-          gap: 6px;
-          font-size: 0.82rem;
-          letter-spacing: 0.06em;
-          color: var(--muted, #5b6675);
+          gap: 2px;
+          position: relative;
+        }
+
+        /* .nav-dropdown-label is a next/link — styled-jsx cannot scope a custom
+           component, so its rules live in globals.css beside .nav-links a. */
+
+        /* its own button, so the arrow is a real target rather than a glyph
+           inside the link — 40px square is the minimum a thumb can hit */
+        .nav-dropdown-arw-btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 32px;
+          height: 32px;
           background: none;
           border: none;
           cursor: pointer;
-          transition: color 0.3s ease;
-          position: relative;
-          padding: 8px 0;
-        }
-
-        .nav-dropdown-trigger:hover,
-        .nav-dropdown-trigger.active {
-          color: var(--ink, #17231c);
+          padding: 0;
         }
 
         .nav-arw {
           font-size: 0.75rem;
           transition: transform 0.3s ease;
           color: var(--gold, #2a523b);
+          line-height: 1;
         }
         .nav-arw.up {
           transform: rotate(180deg);
@@ -294,6 +325,24 @@ export default function NavBar() {
           .nav-dropdown-wrap {
             width: 100%;
             flex-direction: column;
+            align-items: stretch;
+          }
+          /* the row spans the panel so the arrow sits at the far edge, well
+             clear of the label's own tap area */
+          .nav-dropdown-trigger {
+            width: 100%;
+            justify-content: space-between;
+            gap: 12px;
+          }
+          .nav-dropdown-arw-btn {
+            width: 44px;
+            height: 44px;
+            flex: 0 0 auto;
+            border-radius: 50%;
+            border: 1px solid rgba(42, 82, 59, 0.16);
+          }
+          .nav-arw {
+            font-size: 0.95rem;
           }
           .nav-dropdown-menu {
             position: relative;
@@ -302,8 +351,26 @@ export default function NavBar() {
             transform: none;
             width: 100%;
             box-shadow: none;
-            border: none;
-            background: rgba(250, 246, 238, 0.8);
+            border: 1px solid rgba(42, 82, 59, 0.12);
+            background: #ffffff;
+            margin-top: 10px;
+            animation: none;   /* the slide-down reads as a glitch inside a panel that already slid in */
+          }
+          .nav-dropdown-item {
+            padding: 12px;
+          }
+          .nav-dropdown-text strong {
+            font-size: 0.92rem;
+          }
+        }
+
+        @media (hover: none) {
+          /* a tapped item keeps :hover until the next tap somewhere else */
+          .nav-dropdown-item:hover {
+            background: none;
+          }
+          .nav-dropdown-item:active {
+            background: rgba(42, 82, 59, 0.07);
           }
         }
       `}</style>

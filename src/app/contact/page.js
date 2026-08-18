@@ -18,7 +18,7 @@ export default function Contact() {
 
       <section className="section tight">
         <div className="wrap">
-          <div className="split" style={{ gridTemplateColumns: "1.5fr 1fr", alignItems: "start" }}>
+          <div className="split split-contact">
             <Reveal><BookingForm /></Reveal>
             <Reveal delay={1} className="contact-aside">
               <div className="cinfo"><div className="ic">✆</div><div><b>Call or WhatsApp</b><p>+91 95123 46056<br />Mon–Sat, 8am – 8pm</p></div></div>

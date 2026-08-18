@@ -152,7 +152,7 @@ export default function InteractiveServices() {
             Specialised <em>Rehabilitation</em> &amp; Care
           </h2>
           <p className="isvc-sub">
-            Interactive suite — click any programme to explore clinical focus, conditions treated, and package rates.
+            Interactive suite — tap any programme to explore clinical focus, conditions treated, and package rates.
           </p>
         </div>
 
@@ -231,15 +231,15 @@ export default function InteractiveServices() {
 
       <style jsx>{`
         .isvc-section {
-          padding: 60px 0 100px;
+          padding: 50px 0 80px;
           background: var(--bg, #f4eee2);
         }
         .isvc-header {
-          margin-bottom: 48px;
+          margin-bottom: 36px;
         }
         .isvc-heading {
           font-family: var(--serif);
-          font-size: clamp(2.4rem, 5vw, 4.2rem);
+          font-size: clamp(2.2rem, 5vw, 4.2rem);
           font-weight: 300;
           line-height: 1.05;
           margin-top: 12px;
@@ -250,22 +250,22 @@ export default function InteractiveServices() {
           color: var(--gold, #2a523b);
         }
         .isvc-sub {
-          font-size: clamp(0.95rem, 1.4vw, 1.15rem);
+          font-size: clamp(0.92rem, 1.4vw, 1.15rem);
           color: var(--muted, #5b6675);
-          margin-top: 16px;
+          margin-top: 14px;
           max-width: 60ch;
         }
 
         .isvc-list {
           display: flex;
           flex-direction: column;
-          gap: 16px;
+          gap: 14px;
         }
 
         .isvc-item {
           background: #ffffff !important;
           border: 1px solid rgba(18, 33, 25, 0.14) !important;
-          border-radius: 20px;
+          border-radius: 18px;
           overflow: hidden;
           opacity: 1 !important;
           transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
@@ -288,8 +288,8 @@ export default function InteractiveServices() {
           width: 100%;
           display: flex;
           align-items: center;
-          gap: 20px;
-          padding: 24px 32px;
+          gap: 18px;
+          padding: 22px 28px;
           background: #ffffff;
           border: none;
           cursor: pointer;
@@ -299,16 +299,17 @@ export default function InteractiveServices() {
 
         .isvc-num {
           font-family: var(--serif);
-          font-size: 1.5rem;
+          font-size: 1.4rem;
           color: var(--gold, #2a523b) !important;
           font-weight: 600;
           opacity: 1 !important;
-          width: 36px;
+          width: 32px;
+          flex-shrink: 0;
         }
 
         .isvc-ico-wrap {
-          width: 48px;
-          height: 48px;
+          width: 44px;
+          height: 44px;
           border-radius: 12px;
           background: rgba(42, 82, 59, 0.06);
           border: 1px solid rgba(42, 82, 59, 0.16);
@@ -331,7 +332,7 @@ export default function InteractiveServices() {
 
         .isvc-title {
           font-family: var(--serif);
-          font-size: clamp(1.3rem, 2.2vw, 1.8rem);
+          font-size: clamp(1.15rem, 2.2vw, 1.8rem);
           font-weight: 500;
           color: #17231c !important;
           opacity: 1 !important;
@@ -345,7 +346,7 @@ export default function InteractiveServices() {
         }
 
         .isvc-tagline {
-          font-size: 0.9rem;
+          font-size: 0.86rem;
           color: #4a5568 !important;
           opacity: 1 !important;
           display: block;
@@ -355,11 +356,11 @@ export default function InteractiveServices() {
         .isvc-meta-side {
           display: flex;
           align-items: center;
-          gap: 16px;
+          gap: 14px;
         }
 
         .isvc-badge {
-          font-size: 0.8rem;
+          font-size: 0.78rem;
           font-weight: 600;
           padding: 6px 14px;
           border-radius: 100px;
@@ -369,8 +370,8 @@ export default function InteractiveServices() {
         }
 
         .isvc-toggle-btn {
-          width: 38px;
-          height: 38px;
+          width: 36px;
+          height: 36px;
           border-radius: 50%;
           border: 1px solid rgba(18, 33, 25, 0.2);
           display: flex;
@@ -380,6 +381,7 @@ export default function InteractiveServices() {
           font-weight: 600;
           color: #17231c !important;
           transition: all 0.3s ease;
+          flex-shrink: 0;
         }
 
         .isvc-item.open .isvc-toggle-btn {
@@ -405,52 +407,40 @@ export default function InteractiveServices() {
         }
 
         .isvc-panel-inner {
-          padding: 32px;
+          padding: 28px;
           background: linear-gradient(180deg, #faf6ee 0%, #ffffff 100%);
         }
 
         .isvc-grid {
           display: grid;
           grid-template-columns: 1.2fr 1fr;
-          gap: 40px;
-        }
-
-        @media (max-width: 860px) {
-          .isvc-grid {
-            grid-template-columns: 1fr;
-            gap: 24px;
-          }
-          .isvc-bar {
-            padding: 18px 20px;
-            gap: 14px;
-          }
-          .isvc-badge {
-            display: none;
-          }
+          gap: 32px;
         }
 
         .isvc-desc {
-          font-size: 1rem;
-          line-height: 1.65;
+          font-size: 0.96rem;
+          line-height: 1.6;
           color: #17231c !important;
-          margin-bottom: 24px;
+          margin-bottom: 20px;
         }
 
         .isvc-pricing {
           display: flex;
-          gap: 16px;
-          margin-bottom: 28px;
+          gap: 12px;
+          margin-bottom: 24px;
           flex-wrap: wrap;
         }
 
         .isvc-price-tag {
-          padding: 14px 22px;
+          padding: 12px 18px;
           border-radius: 12px;
           background: #ffffff;
           border: 1px solid rgba(18, 33, 25, 0.12);
           display: flex;
           flex-direction: column;
-          gap: 4px;
+          gap: 2px;
+          flex: 1;
+          min-width: 140px;
         }
 
         .isvc-price-tag.gold {
@@ -459,7 +449,7 @@ export default function InteractiveServices() {
         }
 
         .isvc-price-tag span {
-          font-size: 0.76rem;
+          font-size: 0.72rem;
           text-transform: uppercase;
           letter-spacing: 0.08em;
           color: #5b6675 !important;
@@ -467,18 +457,23 @@ export default function InteractiveServices() {
         }
 
         .isvc-price-tag strong {
-          font-size: 1.15rem;
+          font-size: 1.1rem;
           color: var(--gold, #2a523b) !important;
           font-family: var(--serif);
         }
 
+        .isvc-actions .btn {
+          width: 100%;
+          justify-content: center;
+        }
+
         .isvc-cond-head {
           display: block;
-          font-size: 0.8rem;
+          font-size: 0.78rem;
           text-transform: uppercase;
           letter-spacing: 0.1em;
           color: #5b6675 !important;
-          margin-bottom: 14px;
+          margin-bottom: 12px;
           font-weight: 600;
         }
 
@@ -489,11 +484,11 @@ export default function InteractiveServices() {
         }
 
         .isvc-chip {
-          padding: 8px 16px;
+          padding: 7px 14px;
           border-radius: 100px;
           background: #ffffff;
           border: 1px solid rgba(18, 33, 25, 0.14);
-          font-size: 0.84rem;
+          font-size: 0.82rem;
           font-weight: 500;
           color: #17231c !important;
           box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
@@ -503,6 +498,58 @@ export default function InteractiveServices() {
         .isvc-chip:hover {
           border-color: var(--gold, #2a523b);
           color: var(--gold, #2a523b) !important;
+        }
+
+        /* Mobile Adjustments (< 768px) */
+        @media (max-width: 768px) {
+          .isvc-section {
+            padding: 36px 0 60px;
+          }
+          .isvc-bar {
+            padding: 16px;
+            gap: 12px;
+          }
+          .isvc-num {
+            font-size: 1.1rem;
+            width: 24px;
+          }
+          .isvc-ico-wrap {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+          }
+          .isvc-ico-wrap svg {
+            width: 20px;
+            height: 20px;
+          }
+          .isvc-title {
+            font-size: 1.1rem;
+          }
+          .isvc-tagline {
+            font-size: 0.78rem;
+          }
+          .isvc-badge {
+            display: none;
+          }
+          .isvc-toggle-btn {
+            width: 32px;
+            height: 32px;
+            font-size: 1.1rem;
+          }
+          .isvc-panel-inner {
+            padding: 20px 16px;
+          }
+          .isvc-grid {
+            grid-template-columns: 1fr;
+            gap: 20px;
+          }
+          .isvc-pricing {
+            flex-direction: column;
+            gap: 10px;
+          }
+          .isvc-price-tag {
+            width: 100%;
+          }
         }
       `}</style>
     </section>

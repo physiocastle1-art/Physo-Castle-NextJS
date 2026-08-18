@@ -1,8 +1,15 @@
 import Link from "next/link";
 import Reveal from "@/components/Reveal";
 import PublicReviewSection from "@/components/PublicReviewSection";
+import { getApprovedReviews } from "@/lib/public-data";
 
 export const metadata = { title: "Patient Stories — Physio Castle" };
+
+/* Reads approved reviews from the database, so without this the page would
+   render per request. An hour keeps it effectively static; approving a review
+   in the admin invalidates the tag immediately, so moderation is not delayed
+   by the cache. */
+export const revalidate = 3600;
 
 const REVIEWS = [
   ["A", "Aarti M.", "Orthopaedic rehab", "After my knee surgery I could barely walk. Dr. Riddhi built a plan that actually made sense — three months later I'm back to my morning runs."],
@@ -16,7 +23,16 @@ const REVIEWS = [
   ["P", "Pranav K.", "Post-COVID rehab", "Post-COVID I struggled with breathlessness for ages. The respiratory rehab here gave me my energy and confidence back."],
 ];
 
-export default function Testimonials() {
+export default async function Testimonials() {
+  /* A database that is unreachable must not take the page down with it — the
+     hard-coded stories below still render, only the live section is dropped. */
+  let reviews = [];
+  try {
+    reviews = await getApprovedReviews();
+  } catch (err) {
+    console.error("[testimonials] could not load approved reviews", err);
+  }
+
   return (
     <>
       <header className="page-hero">
@@ -35,7 +51,7 @@ export default function Testimonials() {
 
       <section className="section tight">
         <div className="wrap">
-          <PublicReviewSection />
+          <PublicReviewSection initialReviews={reviews} />
         </div>
       </section>
 
@@ -57,7 +73,7 @@ export default function Testimonials() {
       <section className="section tight">
         <div className="wrap">
           <Reveal className="sec-head"><span className="eyebrow">See &amp; hear</span><h2 className="title">Video <em>testimonials</em></h2></Reveal>
-          <div className="svc-grid" style={{ gridTemplateColumns: "repeat(3,1fr)" }}>
+          <div className="svc-grid svc-grid-3">
             {[["I walk pain-free again", "Aarti's knee recovery"], ["My dad's second start", "Stroke rehab journey"], ["Breathing freely", "Post-COVID recovery"]].map(([t, s], i) => (
               <Reveal className="tcard video" delay={i} key={t}><div className="thumb"><div className="play">▶</div></div><div className="cap"><b style={{ fontFamily: "var(--serif)", fontSize: "1.2rem" }}>&ldquo;{t}&rdquo;</b><p className="muted" style={{ marginTop: 6, fontSize: ".86rem" }}>{s}</p></div></Reveal>
             ))}

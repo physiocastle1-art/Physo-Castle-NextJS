@@ -11,7 +11,7 @@ import StoriesRail from "@/components/dn/StoriesRail";
 import ContactPanel from "@/components/dn/ContactPanel";
 import InstagramFeed from "@/components/dn/InstagramFeed";
 
-import { listInstagramPosts } from "@/lib/clinic";
+import { getPublicInstagramPosts } from "@/lib/public-data";
 import { DEFAULT_POSTS } from "@/lib/instagram";
 
 import "./dn-home.css";
@@ -37,7 +37,7 @@ export default async function Home() {
      the wall falls back to the curated defaults instead. */
   let instagramPosts = [];
   try {
-    const rows = await listInstagramPosts({ limit: 8 });
+    const rows = await getPublicInstagramPosts();
     instagramPosts = rows.map((r) => r.shortcode);
   } catch (err) {
     console.error("[home] could not load the Instagram list", err);

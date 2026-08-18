@@ -2,6 +2,11 @@ import { createPackage, listPackages } from "@/lib/clinic";
 import { validatePackage } from "@/lib/validation";
 import { assertValid, jsonOk, readJson, requireApiUser, route } from "@/lib/api";
 
+/* Authenticated and per-user: never statically rendered, never cached.
+   (The no-store response header is applied to /api/admin/* in next.config.mjs.) */
+export const dynamic = "force-dynamic";
+
+
 export const GET = route(async (req) => {
   await requireApiUser({ minRole: "staff" });
   const { searchParams } = new URL(req.url);

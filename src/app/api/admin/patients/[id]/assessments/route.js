@@ -2,6 +2,11 @@ import connectDB from "@/lib/db";
 import { findPatientByRef, createAssessment, getPatientAssessments } from "@/lib/clinic";
 import { ApiError, jsonOk, readJson, requireApiUser, route } from "@/lib/api";
 
+/* Authenticated and per-user: never statically rendered, never cached.
+   (The no-store response header is applied to /api/admin/* in next.config.mjs.) */
+export const dynamic = "force-dynamic";
+
+
 export const GET = route(async (req, { params }) => {
   await requireApiUser({ minRole: "staff" });
   await connectDB();

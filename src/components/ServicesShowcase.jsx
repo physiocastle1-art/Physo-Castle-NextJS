@@ -134,7 +134,7 @@ export default function ServicesShowcase() {
         <h2 className="title">
           Explore the <em>care</em>.
         </h2>
-        <p className="lede">A moving showcase — click any service to open it in full.</p>
+        <p className="lede">A moving showcase — choose any service to open it in full.</p>
       </div>
       <div className="svc-marquee">
         <div className="svc-marquee-track">
@@ -154,7 +154,7 @@ export default function ServicesShowcase() {
           ))}
         </div>
       </div>
-      <p className="svc-marquee-hint">Click any service to explore →</p>
+      <p className="svc-marquee-hint">Choose any service to explore →</p>
     </section>
   );
 }

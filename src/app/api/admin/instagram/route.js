@@ -1,6 +1,11 @@
+import { revalidateTag, revalidatePath } from "next/cache";
 import { createInstagramPost, listInstagramPosts } from "@/lib/clinic";
 import { toShortcode } from "@/lib/instagram";
+import { TAGS } from "@/lib/public-data";
 import { ApiError, assertValid, jsonOk, readJson, requireApiUser, route } from "@/lib/api";
+
+/* Authenticated: never cached anywhere between here and the browser. */
+export const dynamic = "force-dynamic";
 
 export const GET = route(async () => {
   await requireApiUser({ minRole: "staff" });
@@ -26,6 +31,8 @@ export const POST = route(async (req) => {
 
   try {
     const post = await createInstagramPost({ shortcode, label }, me.id);
+    revalidateTag(TAGS.instagram);
+    revalidatePath("/");
     return jsonOk({ ok: true, post }, 201);
   } catch (err) {
     // The unique index on shortcode is what stops the same post being pinned

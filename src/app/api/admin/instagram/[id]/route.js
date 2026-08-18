@@ -1,4 +1,6 @@
+import { revalidateTag, revalidatePath } from "next/cache";
 import { deleteInstagramPost, updateInstagramPost } from "@/lib/clinic";
+import { TAGS } from "@/lib/public-data";
 import { ApiError, jsonOk, readJson, requireApiUser, route } from "@/lib/api";
 
 export const PATCH = route(async (req, { params }) => {
@@ -15,11 +17,17 @@ export const PATCH = route(async (req, { params }) => {
   const post = await updateInstagramPost(params.id, values);
   if (!post) throw new ApiError("Post not found.", 404);
 
+  // Hiding or reordering a post changes the homepage wall.
+  revalidateTag(TAGS.instagram);
+  revalidatePath("/");
+
   return jsonOk({ ok: true, post });
 });
 
 export const DELETE = route(async (req, { params }) => {
   await requireApiUser({ minRole: "admin" });
   if (!(await deleteInstagramPost(params.id))) throw new ApiError("Post not found.", 404);
+  revalidateTag(TAGS.instagram);
+  revalidatePath("/");
   return jsonOk({ ok: true });
 });

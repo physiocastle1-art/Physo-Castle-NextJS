@@ -15,6 +15,10 @@ import { photo, TRAIL_PHOTOS } from "@/lib/dnImages";
 import { Words, RevealEl } from "./Words";
 
 const SPAWN_DISTANCE = 90;   // px of pointer travel between two spawns
+/* A finger travels a much shorter path than a cursor before it runs out of
+   screen, so touch spawns are packed tighter — at the desktop distance a phone
+   drag produces two cards and reads as nothing happening. */
+const TOUCH_SPAWN_DISTANCE = 46;
 const TRAIL_LENGTH = 5;      // alive at once; dropping the oldest plays its exit
 const MAX_TILT = 12;         // degrees either way
 const ENTER_CONFIG = { tension: 130, friction: 28 };
@@ -31,8 +35,15 @@ export default function WhyTrail() {
     const sec = secRef.current;
     const layer = trailRef.current;
     if (!sec || !layer) return;
-    // a coarse pointer has no path to leave, and would spawn on every tap
-    if (isCoarsePointer() || prefersReducedMotion()) return;
+    if (prefersReducedMotion()) return;
+
+    /* Touch gets the same trail, driven by the drag rather than by hover: the
+       finger's path IS the cursor path, it just only exists while the screen is
+       being touched. A press with no travel still spawns one card so a tap is
+       never a dead gesture, and lifting the finger retires the trail the way
+       pointerleave does for a mouse. */
+    const coarse = isCoarsePointer();
+    const spawnDistance = coarse ? TOUCH_SPAWN_DISTANCE : SPAWN_DISTANCE;
 
     const alive = [];
     let spawnIndex = 0;
@@ -75,12 +86,22 @@ export default function WhyTrail() {
       while (alive.length > TRAIL_LENGTH) retire(alive.shift());
     };
 
-    const onMove = (e) => {
-      if (e.pointerType !== "mouse") return;
+    const at = (e) => {
       const r = sec.getBoundingClientRect();
-      const x = e.clientX - r.left;
-      const y = e.clientY - r.top;
-      if (last && Math.hypot(x - last.x, y - last.y) < SPAWN_DISTANCE) return;
+      return { x: e.clientX - r.left, y: e.clientY - r.top };
+    };
+    const onMove = (e) => {
+      /* A mouse trails on hover; a touch only trails while the finger is down,
+         and pointermove fires for touch only in that state — so no extra
+         bookkeeping is needed to tell the two apart. */
+      const { x, y } = at(e);
+      if (last && Math.hypot(x - last.x, y - last.y) < spawnDistance) return;
+      last = { x, y };
+      spawn(x, y);
+    };
+    const onDown = (e) => {
+      if (e.pointerType === "mouse") return;   // hover already covers the mouse
+      const { x, y } = at(e);
       last = { x, y };
       spawn(x, y);
     };
@@ -88,12 +109,20 @@ export default function WhyTrail() {
       last = null;
       while (alive.length) retire(alive.shift());
     };
+    // a mouse click must not wipe the trail — only a lifted finger ends one
+    const onRelease = (e) => { if (e.pointerType !== "mouse") onLeave(); };
 
     sec.addEventListener("pointermove", onMove, { passive: true });
+    sec.addEventListener("pointerdown", onDown, { passive: true });
     sec.addEventListener("pointerleave", onLeave);
+    sec.addEventListener("pointerup", onRelease);
+    sec.addEventListener("pointercancel", onRelease);
     return () => {
       sec.removeEventListener("pointermove", onMove);
+      sec.removeEventListener("pointerdown", onDown);
       sec.removeEventListener("pointerleave", onLeave);
+      sec.removeEventListener("pointerup", onRelease);
+      sec.removeEventListener("pointercancel", onRelease);
       alive.forEach((i) => { i.scale.stop(); i.opacity.stop(); i.el.remove(); });
     };
   }, []);

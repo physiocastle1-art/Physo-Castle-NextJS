@@ -423,8 +423,12 @@ function build(container, onFirstFrame, scale) {
     state.activityTarget = 1;
     state.lastMove = performance.now();
   };
-  const coarse = window.matchMedia("(pointer: coarse)").matches;
-  if (!coarse) window.addEventListener("pointermove", onMove, { passive: true });
+  /* Touch drives the helix too. pointermove fires for touch only while the
+     finger is down, so the scene follows a drag and then eases back to centre
+     on its own once activityTarget decays — no hover required. The listener is
+     on the window rather than the canvas so a drag that starts on the copy
+     still steers the scene behind it. */
+  window.addEventListener("pointermove", onMove, { passive: true });
   const onResize = () => checkSize();
   window.addEventListener("resize", onResize, { passive: true });
 
@@ -481,7 +485,7 @@ function build(container, onFirstFrame, scale) {
   return () => {
     unsub();
     window.removeEventListener("resize", onResize);
-    if (!coarse) window.removeEventListener("pointermove", onMove);
+    window.removeEventListener("pointermove", onMove);
     composer.dispose?.();
     helix.geometry.dispose(); helixMat.dispose();
     ink.geometry.dispose(); inkMat.dispose();

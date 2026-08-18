@@ -1,8 +1,30 @@
+import "server-only";
 import { Resend } from "resend";
 import nodemailer from "nodemailer";
 
+/* Everything below arrives from an UNAUTHENTICATED public form, and is dropped
+   straight into an HTML email the clinic opens. Escaped so a submitted
+   "<img onerror=...>" or a fake "reply here" link renders as literal text
+   rather than as markup in the clinic inbox. */
+const esc = (v) =>
+  String(v ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
+const escList = (v) =>
+  (Array.isArray(v) ? v : [v]).filter(Boolean).map(esc).join(", ");
+
+/* CR/LF in a header is how header injection adds a Bcc:. Strip them. */
+const escHeader = (v) => String(v ?? "").replace(/[\r\n]+/g, " ").trim().slice(0, 200);
+
 export async function sendLeadEmail(leadData) {
-  const apiKey = process.env.RESEND_API_KEY || process.env.NEXT_PUBLIC_RESEND_API_KEY;
+  /* Server-only. NEVER read a NEXT_PUBLIC_* variable for a secret: Next inlines
+     every NEXT_PUBLIC_ value into the client bundle, so the key would be
+     readable by anyone who opens devtools. */
+  const apiKey = process.env.RESEND_API_KEY;
   const clinicEmail = process.env.CLINIC_LEAD_EMAIL || process.env.RESEND_TO_EMAIL || "physiocastle1@gmail.com";
   const fromEmail = process.env.EMAIL_FROM || "onboarding@resend.dev";
   const {
@@ -18,10 +40,13 @@ export async function sendLeadEmail(leadData) {
     type = "Appointment Request",
   } = leadData;
 
-  const subject = `🚨 New Lead: ${name} (${type})`;
+  const subject = escHeader(`🚨 New Lead: ${name} (${type})`);
 
-  const formattedParts = Array.isArray(parts) ? parts.join(", ") : parts || "Not specified";
-  const formattedSlots = Array.isArray(slots) ? slots.join(", ") : slots || "Any time";
+  // Digits only — this is what goes into the tel: and wa.me hrefs.
+  const phoneDigits = String(phone ?? "").replace(/[^0-9+]/g, "");
+
+  const formattedParts = escList(parts) || "Not specified";
+  const formattedSlots = escList(slots) || "Any time";
 
   const htmlContent = `
     <!DOCTYPE html>
@@ -52,28 +77,28 @@ export async function sendLeadEmail(leadData) {
 
           <div class="field">
             <div class="label">Patient Name</div>
-            <div class="value" style="font-size: 20px; color: #2a523b;">${name}</div>
+            <div class="value" style="font-size: 20px; color: #2a523b;">${esc(name)}</div>
           </div>
 
           <div style="display: flex; gap: 20px;" class="field">
             <div>
               <div class="label">Age</div>
-              <div class="value">${age || "N/A"}</div>
+              <div class="value">${esc(age) || "N/A"}</div>
             </div>
             <div>
               <div class="label">Gender</div>
-              <div class="value">${gender || "N/A"}</div>
+              <div class="value">${esc(gender) || "N/A"}</div>
             </div>
             <div>
               <div class="label">Request Type</div>
-              <div class="badge">${type}</div>
+              <div class="badge">${esc(type)}</div>
             </div>
           </div>
 
           <div class="field">
             <div class="label">Phone / Mobile</div>
             <div class="value">
-              <a href="tel:${phone}" style="color: #2a523b; text-decoration: underline;">${phone}</a>
+              <a href="tel:${esc(phoneDigits)}" style="color: #2a523b; text-decoration: underline;">${esc(phone)}</a>
             </div>
           </div>
 
@@ -81,21 +106,21 @@ export async function sendLeadEmail(leadData) {
             address
               ? `<div class="field">
                   <div class="label">Address (Home Visit)</div>
-                  <div class="value">${address}</div>
+                  <div class="value">${esc(address)}</div>
                 </div>`
               : ""
           }
 
           <div class="field">
             <div class="label">Pain Areas / Complaint</div>
-            <div class="value">${formattedParts} ${complaint ? `— ${complaint}` : ""}</div>
+            <div class="value">${formattedParts} ${complaint ? `— ${esc(complaint)}` : ""}</div>
           </div>
 
           ${
             notes
               ? `<div class="field">
                   <div class="label">Additional Notes</div>
-                  <div class="value" style="font-style: italic; background: #f8fafc; padding: 12px; border-radius: 8px;">"${notes}"</div>
+                  <div class="value" style="font-style: italic; background: #f8fafc; padding: 12px; border-radius: 8px;">&quot;${esc(notes)}&quot;</div>
                 </div>`
               : ""
           }
@@ -106,8 +131,8 @@ export async function sendLeadEmail(leadData) {
           </div>
 
           <div class="actions">
-            <a href="tel:${phone}" class="btn">📞 Call Patient</a>
-            <a href="https://wa.me/${phone.replace(/[^0-9]/g, "")}" class="btn btn-wa">💬 Message on WhatsApp</a>
+            <a href="tel:${esc(phoneDigits)}" class="btn">📞 Call Patient</a>
+            <a href="https://wa.me/${esc(phoneDigits.replace(/[^0-9]/g, ""))}" class="btn btn-wa">💬 Message on WhatsApp</a>
           </div>
         </div>
       </body>

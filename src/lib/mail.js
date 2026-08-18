@@ -1,3 +1,5 @@
+import "server-only";
+
 /* Outbound mail. No SMTP configured yet, so links are printed to the server
    console — watch the terminal running `npm run dev`.
 

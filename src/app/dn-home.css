@@ -115,7 +115,9 @@ body:has(.dn-sec) .nav.scrolled {
 /* flex-end, not `end`: the label sits on the row's baseline next to the ring */
 .dn-card__cta { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem;
   font-size: 0.82rem; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 500; }
-.dn-card__cta:hover .dn-ring { transform: translate(2px, -2px); }
+.dn-card__cta:hover .dn-ring,
+.dn-card__cta:active .dn-ring { transform: translate(2px, -2px); }
+.dn-socials a:active { background: rgba(255, 255, 255, 0.14); }
 
 /* ── hero ──────────────────────────────────────────────────────────────── */
 /* the panel colour must equal the scene's clear colour or the canvas paints a
@@ -281,7 +283,11 @@ body:has(.dn-sec) .nav.scrolled {
   flex: 1 1 auto; display: flex; gap: calc(0.625 * var(--u));
   overflow-x: auto; overflow-y: hidden;
   scroll-behavior: auto;              /* smooth fights the direct scrollLeft writes */
-  touch-action: pan-y;
+  /* pan-y alone tells the browser "vertical only", which is exactly the gesture
+     this rail is NOT for — a finger could never move it sideways. Both axes are
+     allowed instead, and the browser picks by the direction of the swipe: down
+     the page scrolls, across the rail scrolls. */
+  touch-action: pan-x pan-y;
   scrollbar-width: none; -ms-overflow-style: none;
 }
 .dn-stories__rail::-webkit-scrollbar { display: none; }
@@ -538,4 +544,78 @@ body:has(.dn-sec) .nav.scrolled {
 
 @media (prefers-reduced-motion: reduce) {
   .dn-ig__cell[data-stagger="down"] { margin-top: 0; }
+}
+
+
+/* =====================================================================
+   PHONE / TABLET
+   The composition is mobile-first above; what is left here is the handful
+   of places where a desktop assumption survives into a small screen.
+   ===================================================================== */
+
+/* lvh is the viewport with the browser chrome HIDDEN. A sticky panel sized in
+   lvh is therefore taller than what a phone actually shows while the address
+   bar is up, and the bottom of every card — the title and its CTA, which sit
+   at the card's foot — falls below the fold. svh is the guaranteed-visible
+   height, so the panel always fits. .dn-about's negative margin is the matched
+   half of this pair: it must ride up by exactly the panel's height, so the two
+   values change together or the About block lands on top of Services. */
+@media (max-width: 1023px) {
+  .dn-svc { height: 100svh; }
+  .dn-stories { height: 100svh; }
+  .dn-about { margin-top: -100svh; }
+  .dn-runway { height: 400svh; }
+}
+
+@media (max-width: 767px) {
+  /* the trail cards are sized for a 1440 artboard; at 1rem/unit they are wider
+     than a third of a phone and only two ever fit on the path */
+  .dn-trail__card { width: 8.5rem; height: 11rem; }
+
+  .dn-hero { padding: 6.5rem 1.15rem 2.5rem; }
+  .dn-hero__scene { height: 32svh; }
+  .dn-hero__actions .btn { flex: 1 1 auto; justify-content: center; }
+
+  .dn-why { padding: 4.5rem 1.15rem; }
+  .dn-why__actions .btn { flex: 1 1 auto; justify-content: center; }
+
+  .dn-svc { padding: 5.5rem 1.15rem 1.5rem; gap: 0.9rem; }
+  .dn-card { padding: 1.25rem; width: 80vw; }
+
+  .dn-about { padding: 3rem 1.15rem; gap: 2rem; }
+  .dn-about__banner { height: 11rem; }
+  .dn-stats { gap: 1.2rem 1rem; }
+  .dn-stat { padding-left: 0.9rem; }
+  .dn-about__actions .btn { flex: 1 1 auto; justify-content: center; }
+
+  .dn-stories { padding-top: 4.5rem; }
+  .dn-stories__box { height: calc(100% - 5rem); padding: 0 1.15rem; }
+  .dn-story { padding: 1.25rem; }
+
+  .dn-contact { padding: 4rem 1.15rem 3rem; }
+  .dn-form { padding: 1.25rem; }
+
+  .dn-ig { padding: 3rem 0 3.5rem; border-radius: var(--dn-corner-card); }
+  .dn-ig__inner { width: min(100% - 2rem, 1180px); }
+}
+
+/* iOS zooms the whole page in when a focused field's text is under 16px. Every
+   input on the site is set below that for looks; restoring 16px on touch is the
+   only way to stop the layout lurching sideways on first tap. */
+@media (pointer: coarse) {
+  .dn-field input,
+  .dn-field textarea { font-size: 16px; }
+}
+
+/* Hover-driven flourishes are inert on touch, and worse, a tapped element can
+   keep its :hover state until the next tap elsewhere — a card left looking
+   permanently selected. Confine them to devices that really hover. */
+@media (hover: none) {
+  .dn-sec .btn-gold:hover { background: var(--dn-brand-500); }
+  .dn-sec .btn-ghost:hover { background: var(--dn-lime-200); border-color: var(--dn-lime-400); }
+  .dn-ig__ghost:hover { border-color: var(--dn-line); }
+}
+@media (hover: none) {
+  .dn-sec .btn-gold:active { background: var(--dn-brand-900); }
+  .dn-sec .btn-ghost:active { background: var(--dn-lime-400); }
 }

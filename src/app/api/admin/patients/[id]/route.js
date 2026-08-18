@@ -5,6 +5,11 @@ import { validatePatient } from "@/lib/validation";
 import { prefixKeys } from "@/lib/inputs";
 import { ApiError, assertValid, jsonOk, readJson, requireApiUser, route } from "@/lib/api";
 
+/* Authenticated and per-user: never statically rendered, never cached.
+   (The no-store response header is applied to /api/admin/* in next.config.mjs.) */
+export const dynamic = "force-dynamic";
+
+
 /* READ — the pages fetch through lib/clinic.js directly, but an explicit GET
    keeps the resource complete for anything scripted against it. */
 export const GET = route(async (req, { params }) => {

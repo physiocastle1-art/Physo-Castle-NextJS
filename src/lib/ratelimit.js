@@ -1,3 +1,4 @@
+import "server-only";
 import connectDB from "@/lib/db";
 import { LoginAttempt } from "@/lib/models";
 import { ApiError } from "@/lib/api";
@@ -17,6 +18,15 @@ export const LIMITS = {
   // Guessing an invite / reset token, which arrives by link and so should
   // almost never fail for a legitimate user.
   token: { limit: 10, windowMs: 60 * 60 * 1000, lockMs: 60 * 60 * 1000 },
+
+  /* Public, unauthenticated endpoints. These count EVERY request, not just
+     failed ones, because there is no "success" that should reset the budget —
+     a real visitor books once, a spammer books a thousand times.
+
+     Contact is the expensive one: each POST sends an email, so an unbounded
+     endpoint burns the Resend quota and floods the clinic's inbox. */
+  publicContact: { limit: 5, windowMs: 60 * 60 * 1000 },
+  publicReview: { limit: 3, windowMs: 60 * 60 * 1000 },
 };
 
 /* Throws 429 when the bucket is locked. Call BEFORE doing the expensive work
@@ -82,4 +92,72 @@ export async function recordFailure(key, opts) {
 export async function clearAttempts(key) {
   await connectDB();
   await LoginAttempt.deleteOne({ key });
+}
+
+/* ------------------------------------------------------ public endpoints */
+
+/* A fixed-window counter for unauthenticated routes, sharing the same
+   TTL-expiring collection as the auth throttles above.
+
+   Different from recordFailure(): that one is called only when an attempt
+   FAILS and a success clears the bucket, which is right for a password guess.
+   This one is called once per request, before the work happens, and there is
+   nothing a caller can do to reset it early.
+
+   No separate lockout window — when the budget is spent the caller simply
+   waits for the current window to roll over, and Retry-After says how long. */
+export async function enforceRateLimit(key, { limit, windowMs }, message) {
+  await connectDB();
+  const now = new Date();
+
+  const doc = await LoginAttempt.findOne({ key });
+
+  // Fresh bucket, or the previous window has rolled over.
+  if (!doc || now - doc.windowStart > windowMs) {
+    const fresh = {
+      key,
+      count: 1,
+      windowStart: now,
+      lockedUntil: null,
+      expiresAt: new Date(now.getTime() + windowMs),
+    };
+    try {
+      await LoginAttempt.findOneAndUpdate({ key }, fresh, { upsert: true });
+    } catch (err) {
+      // Two simultaneous first-requests race to insert the same key; the loser
+      // just counts itself into the winner's window.
+      if (err?.code !== 11000) throw err;
+      await LoginAttempt.updateOne({ key }, { $inc: { count: 1 } });
+    }
+    return;
+  }
+
+  const count = doc.count + 1;
+
+  // Counted even when over budget, so hammering the endpoint does not extend
+  // the window but does keep the row alive for its full TTL.
+  await LoginAttempt.updateOne({ _id: doc._id }, { $inc: { count: 1 } });
+
+  if (count > limit) {
+    const retryAfterMs = doc.windowStart.getTime() + windowMs - now.getTime();
+    const retryAfterSec = Math.max(1, Math.ceil(retryAfterMs / 1000));
+    const minutes = Math.max(1, Math.ceil(retryAfterSec / 60));
+
+    throw new ApiError(
+      message || `Too many requests. Please try again in ${minutes} minute${minutes === 1 ? "" : "s"}.`,
+      429,
+      null,
+      "rate_limited",
+      { "Retry-After": String(retryAfterSec) }
+    );
+  }
+}
+
+/* Rate-limit key for an unauthenticated caller. The IP comes from
+   x-forwarded-for, which the CLIENT can forge on a bare origin — behind Vercel
+   the platform rewrites it, so this is trustworthy in production and merely
+   best-effort locally. Scoped per route so one endpoint cannot exhaust
+   another's budget. */
+export function publicKey(scope, ip) {
+  return `public:${scope}:${ip || "unknown"}`;
 }

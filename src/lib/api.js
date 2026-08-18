@@ -1,3 +1,4 @@
+import "server-only";
 import { NextResponse } from "next/server";
 import { getSessionUser, hasRole } from "@/lib/auth";
 
@@ -6,11 +7,14 @@ export class ApiError extends Error {
      booking form needs to tell "outside clinic hours" (offer to override) apart
      from "that slot is taken" (never overridable), and the human message is the
      wrong thing to test against. */
-  constructor(message, status = 400, extra = null, code = null) {
+  constructor(message, status = 400, extra = null, code = null, headers = null) {
     super(message);
     this.status = status;
     this.extra = extra;
     this.code = code;
+    // Response headers the failure itself needs to carry — a 429 is useless to
+    // a well-behaved client without Retry-After.
+    this.headers = headers;
   }
 }
 
@@ -30,7 +34,38 @@ export function assertValid(errors) {
   if (errors && Object.keys(errors).length > 0) throw new ValidationFailed(errors);
 }
 
-export const jsonOk = (data = {}, status = 200) => NextResponse.json(data, { status });
+export const jsonOk = (data = {}, status = 200, headers = undefined) =>
+  NextResponse.json(data, { status, headers });
+
+/* ------------------------------------------------------------- caching */
+
+/* Anything behind requireApiUser() is per-user and must never be held by a
+   shared cache (a CDN, a corporate proxy, the browser's bfcache). Next marks
+   these routes dynamic already; this stops anything BETWEEN the server and the
+   browser from keeping a copy. */
+export const NO_STORE = {
+  "Cache-Control": "no-store, no-cache, must-revalidate, private",
+};
+
+/* Public, non-personalised JSON. Served from cache for `sMaxAge` seconds and
+   then kept usable while it refreshes in the background, so a burst of traffic
+   costs one database read rather than one per visitor. */
+export const publicCacheHeaders = (sMaxAge = 300, swr = 3600) => ({
+  "Cache-Control": `public, s-maxage=${sMaxAge}, stale-while-revalidate=${swr}`,
+});
+
+export const jsonNoStore = (data = {}, status = 200) => jsonOk(data, status, NO_STORE);
+
+/* Next signals redirect / notFound / "this route is dynamic" by throwing a
+   tagged error. These are framework control flow, not failures. */
+function isNextControlFlow(err) {
+  const digest = err?.digest;
+  return (
+    digest === "DYNAMIC_SERVER_USAGE" ||
+    (typeof digest === "string" &&
+      (digest === "NEXT_NOT_FOUND" || digest.startsWith("NEXT_REDIRECT")))
+  );
+}
 
 /* Wraps a route handler so thrown ApiErrors and mongoose validation failures
    become clean JSON instead of an HTML 500 page. */
@@ -39,6 +74,12 @@ export function route(handler) {
     try {
       return await handler(req, ctx);
     } catch (err) {
+      /* redirect(), notFound() and Next's static-render probe all signal by
+         THROWING. Catching them turns a control-flow signal into a 500 and, in
+         the probe's case, hides from Next that the route is dynamic. They have
+         to travel past this handler untouched. */
+      if (isNextControlFlow(err)) throw err;
+
       if (err instanceof ApiError) {
         return NextResponse.json(
           {
@@ -47,7 +88,7 @@ export function route(handler) {
             ...(err.extra ? { details: err.extra } : {}),
             ...(err.fieldErrors ? { fieldErrors: err.fieldErrors } : {}),
           },
-          { status: err.status }
+          { status: err.status, headers: { ...NO_STORE, ...(err.headers || {}) } }
         );
       }
       if (err?.name === "ValidationError") {

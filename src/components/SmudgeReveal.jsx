@@ -2,13 +2,21 @@
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 
-/* Exact port of the CODE-GRID Ashleybrookecs "smudge revealer":
-   a dark foreground ("DIG IN") with a light layer (the quote) revealed
-   through a gooey, dissolving smudge that follows the cursor. */
+/* Port of the CODE-GRID Ashleybrookecs "smudge revealer": a dark foreground
+   ("Scratch") with a light layer (the quote) revealed through a gooey,
+   dissolving smudge that follows the pointer.
+
+   TOUCH: a phone has no hover, so the same reveal is driven by the finger.
+   touchmove stays passive — the page keeps scrolling while you scratch, which
+   is the only behaviour that does not feel like the page has frozen. The blur
+   radius and the stamp rate are both dialled back on a coarse pointer: the goo
+   filter is re-rasterised every frame and a phone GPU cannot afford the
+   desktop settings. */
 export default function SmudgeReveal() {
   const heroRef = useRef(null);
   const svgRef = useRef(null);
   const blobsRef = useRef(null);
+  const blurRef = useRef(null);
 
   useEffect(() => {
     const hero = heroRef.current;
@@ -16,21 +24,36 @@ export default function SmudgeReveal() {
     const container = blobsRef.current;
     if (!hero || !svg || !container) return;
 
-    const isMobile = window.innerWidth < 768;
-    if (isMobile) {
-      // On mobile viewports, skip heavy scratch calculations entirely
-      hero.classList.add("smudged");
+    /* Reduced motion is the one case that still skips the interaction outright
+       — there is nothing to reveal progressively if nothing may animate. */
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      hero.classList.add("smudged", "revealed");
       return;
     }
 
+    const coarse = window.matchMedia("(pointer: coarse)").matches;
+
+    /* A phone repaints the goo filter over the whole card each frame. Half the
+       blur and a third of the stamps keeps it at frame rate; the smudge reads
+       the same, only slightly tighter. */
     const config = {
-      smoothing: 0.1, movementThreshold: 0.01, sizeFromSpeed: 0.22,
-      expandMultiplier: 2, expandTime: 2, expandEase: "power1.inOut",
-      dissolveStart: 2, dissolveTime: 3, dissolveEase: "power3.in",
+      smoothing: coarse ? 0.16 : 0.1,
+      movementThreshold: 0.01,
+      sizeFromSpeed: coarse ? 0.5 : 0.22,
+      minRadius: coarse ? 22 : 0,     // a slow finger still leaves a mark
+      stampEveryNthFrame: coarse ? 3 : 1,
+      expandMultiplier: 2,
+      expandTime: 2,
+      expandEase: "power1.inOut",
+      dissolveStart: 2,
+      dissolveTime: 3,
+      dissolveEase: "power3.in",
     };
+    if (blurRef.current) blurRef.current.setAttribute("stdDeviation", coarse ? "13" : "25");
+
     const pointer = { x: 0, y: 0 };
     const smooth = { x: 0, y: 0 };
-    let hasStarted = false, raf = 0;
+    let hasStarted = false, raf = 0, frame = 0;
     const tweens = new Set();
 
     function onMove(x, y) {
@@ -39,7 +62,12 @@ export default function SmudgeReveal() {
       pointer.x = x; pointer.y = y;
     }
     const mouse = (e) => { const r = hero.getBoundingClientRect(); onMove(e.clientX - r.left, e.clientY - r.top); };
-    const touch = (e) => { const r = hero.getBoundingClientRect(); const t = e.touches[0]; onMove(t.clientX - r.left, t.clientY - r.top); };
+    const touch = (e) => {
+      const t = e.touches[0];
+      if (!t) return;
+      const r = hero.getBoundingClientRect();
+      onMove(t.clientX - r.left, t.clientY - r.top);
+    };
     hero.addEventListener("mousemove", mouse);
     hero.addEventListener("touchstart", touch, { passive: true });
     hero.addEventListener("touchmove", touch, { passive: true });
@@ -71,8 +99,11 @@ export default function SmudgeReveal() {
         smooth.x += (pointer.x - smooth.x) * config.smoothing;
         smooth.y += (pointer.y - smooth.y) * config.smoothing;
         const speed = Math.hypot(pointer.x - smooth.x, pointer.y - smooth.y);
-        if (speed > config.movementThreshold) stamp(smooth.x, smooth.y, speed * config.sizeFromSpeed);
+        if (speed > config.movementThreshold && frame % config.stampEveryNthFrame === 0) {
+          stamp(smooth.x, smooth.y, Math.max(config.minRadius, speed * config.sizeFromSpeed));
+        }
       }
+      frame++;
       raf = requestAnimationFrame(update);
     }
     raf = requestAnimationFrame(update);
@@ -89,15 +120,18 @@ export default function SmudgeReveal() {
 
   return (
     <section className="smudge-hero" ref={heroRef}>
-      <span className="smudge-hint">Scratch me ✦</span>
+      <span className="smudge-hint">
+        <span className="smudge-hint-pointer">Scratch me ✦</span>
+        <span className="smudge-hint-touch">Drag to scratch ✦</span>
+      </span>
       <div className="hero-content-foreground"><h1>Scratch</h1></div>
       <div className="hero-content-background">
-        <h3 style={{ whiteSpace: "nowrap", width: "95%" }}>Physiotherapy is a Journey to Pain-Free Living.</h3>
+        <h3>Physiotherapy is a Journey to Pain-Free Living.</h3>
       </div>
       <svg ref={svgRef} xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" className="smudge-revealer">
         <defs>
           <filter id="smudge-goo">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="25" />
+            <feGaussianBlur ref={blurRef} in="SourceGraphic" stdDeviation="25" />
             <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 60 -14" />
           </filter>
         </defs>

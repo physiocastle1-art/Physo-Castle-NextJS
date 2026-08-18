@@ -81,6 +81,13 @@ h2.title em{font-style:italic;color:var(--gold)}
 .nav-links a{font-size:.82rem;letter-spacing:.06em;color:var(--muted);transition:.3s;position:relative}
 .nav-links a::after{content:"";position:absolute;left:0;bottom:-6px;height:1px;width:0;background:var(--gold);transition:.4s var(--ease)}
 .nav-links a:hover,.nav-links a.active{color:var(--ink)}
+/* The Services label is a next/link, so it inherits .nav-links a above and only
+   needs what the split trigger row adds. It cannot be styled from NavBar's own
+   styled-jsx block: that scopes by class, and custom components never receive
+   the scope class. */
+.nav-dropdown-label{padding:8px 0}
+.nav-dropdown-trigger.active .nav-dropdown-label{color:var(--ink)}
+.nav-dropdown-trigger.active .nav-dropdown-label::after{width:100%}
 .nav-links a:hover::after,.nav-links a.active::after{width:100%}
 .nav-cta{padding:11px 22px;border-radius:100px;background:var(--gold);color:#fff;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;font-weight:600;transition:.4s var(--ease)}
 .nav-cta:hover{background:var(--gold-bright);transform:translateY(-2px)}
@@ -90,12 +97,33 @@ h2.title em{font-style:italic;color:var(--gold)}
 .burger.open span:nth-child(2){opacity:0}
 .burger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
 @media(max-width:920px){
-  .nav-links{position:fixed;inset:0;flex-direction:column;justify-content:center;background:rgba(244,238,226,.98);backdrop-filter:blur(20px);gap:26px;transform:translateX(100%);transition:.6s var(--ease)}
+  /* The panel used to centre its children with no way to scroll. Seven links
+     is fine; open the Services dropdown and its seven more push the Contact
+     link off the bottom of a phone with nothing to reach it by. It scrolls now,
+     and only centres while the content still fits. */
+  .nav-links{position:fixed;inset:0;flex-direction:column;justify-content:flex-start;
+    align-items:stretch;background:rgba(244,238,226,.98);backdrop-filter:blur(20px);
+    -webkit-backdrop-filter:blur(20px);gap:18px;
+    padding:calc(70px + env(safe-area-inset-top)) 26px calc(32px + env(safe-area-inset-bottom));
+    overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
+    transform:translateX(100%);transition:.6s var(--ease)}
   .nav-links.open{transform:translateX(0)}
-  .nav-links a{font-size:1.5rem;font-family:var(--serif)}
+  .nav-links a{font-size:1.4rem;font-family:var(--serif);padding:4px 0}
+  .nav-links a::after{bottom:0}
+  /* the label takes the row and pushes the arrow button to the far edge */
+  .nav-dropdown-label{flex:1 1 auto;padding:6px 0}
+  /* the CTA is the primary action and was simply removed on small screens */
   .nav .nav-cta{display:none}
+  .nav-links-cta{display:inline-flex;align-items:center;justify-content:center;
+    margin-top:8px;padding:15px 26px;border-radius:100px;background:var(--gold);color:#fff;
+    font-family:var(--sans)!important;font-size:.8rem!important;letter-spacing:.1em;
+    text-transform:uppercase;font-weight:600}
+  .nav-links-cta::after{display:none!important}
   .burger{display:flex}
+  /* the panel is a scroll container of its own; the page behind it must not move */
+  body.nav-open{overflow:hidden}
 }
+.nav-links-cta{display:none}
 
 .hero{min-height:100vh;display:flex;align-items:center;position:relative;padding-top:120px;overflow:hidden}
 .hero-inner{position:relative;z-index:2}
@@ -371,10 +399,18 @@ h2.title em{font-style:italic;color:var(--gold)}
 .smudge-hero .hero-content-foreground{display:flex;justify-content:center;align-items:flex-end;background:#0f1f16;color:#c5b597}
 .smudge-hero .hero-content-background{display:flex;justify-content:center;align-items:center;text-align:center;background:#e2ebd9;color:#17231c;-webkit-mask:url(#smudge-mask);mask:url(#smudge-mask)}
 .smudge-hero h1{color:inherit;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;font-weight:800;font-size:clamp(5rem,19vw,17rem);line-height:.78;letter-spacing:-.01em}
-.smudge-hero h3{color:inherit;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;font-weight:600;font-size:clamp(1.8rem,5vw,4.4rem);line-height:.95;width:78%;margin:0 auto}
+.smudge-hero h3{color:inherit;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;font-weight:600;font-size:clamp(1.55rem,5vw,4.4rem);line-height:.95;width:min(95%,34ch);margin:0 auto;text-wrap:balance}
 .smudge-revealer{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
-.smudge-hint{position:absolute;top:1.6rem;left:50%;transform:translateX(-50%);z-index:5;color:#fff;font-family:'Geist Mono',monospace;text-transform:uppercase;font-size:.72rem;letter-spacing:.32em;pointer-events:none;transition:opacity .6s ease;opacity:.9}
+.smudge-hint{position:absolute;top:1.6rem;left:50%;transform:translateX(-50%);z-index:5;color:#fff;font-family:'Geist Mono',monospace;text-transform:uppercase;font-size:.72rem;letter-spacing:.32em;pointer-events:none;transition:opacity .6s ease;opacity:.9;white-space:nowrap;text-align:center}
 .smudge-hero.smudged .smudge-hint{opacity:0}
+/* a phone is told to drag, a mouse is told to hover — the wrong verb on the
+   wrong device is why the block read as broken on touch */
+.smudge-hint-touch{display:none}
+@media(hover:none),(pointer:coarse){
+  .smudge-hint-pointer{display:none}
+  .smudge-hint-touch{display:inline}
+  .smudge-hint{font-size:.62rem;letter-spacing:.22em;top:1.1rem}
+}
 
 /* ---------- Landing Intro (exact CODE-GRID reveal, blue/cream) ---------- */
 /* ---------- Persistent landing hero (white/blue) + Codegrid intro reveal ---------- */
@@ -914,20 +950,18 @@ h2.title em{font-style:italic;color:var(--gold)}
   .pstat-bg{background-position:center 30%}
 }
 
-/* ---- Mobile animation performance optimizations & fallbacks ---- */
+/* ---- Mobile fallbacks ---- */
+/* The scratch card keeps its mask on a phone — the reveal is finger-driven
+   there (see SmudgeReveal.jsx), so hiding the foreground would remove the
+   very thing there is to scratch off. Only a reduced-motion request skips it,
+   and that is handled by .revealed below. */
 @media(max-width:767px){
-  /* Bypass heavy smudge reveal mask / touch loops in scratch card */
-  .smudge-hero .hero-content-background {
-    -webkit-mask: none !important;
-    mask: none !important;
-  }
-  .smudge-hero .hero-content-foreground {
-    display: none !important;
-  }
-  .smudge-hint {
-    display: none !important;
-  }
+  .smudge-hero{height:clamp(360px,62vh,520px);border-radius:var(--radius)}
+  .smudge-hero .hero-content-foreground,
+  .smudge-hero .hero-content-background{padding:1.5rem}
 }
+.smudge-hero.revealed .hero-content-foreground{display:none}
+.smudge-hero.revealed .hero-content-background{-webkit-mask:none;mask:none}
 
 /* ---- Interactive body / symptom map (BodyMap.jsx) ---- */
 .bodymap{display:grid;grid-template-columns:minmax(0,380px) 1fr;gap:clamp(32px,5vw,72px);
@@ -1162,4 +1196,212 @@ h2.title em{font-style:italic;color:var(--gold)}
 .transition-svg-wrapper svg {
   width: 100%;
   height: 100%;
+}
+
+/* =====================================================================
+   RESPONSIVE / TOUCH PASS
+
+   Two kinds of rule live here.
+
+   1. Layout that only ever had a desktop answer. Where a page used to set
+      grid-template-columns inline, the inline style beat every media query
+      below it — those are now classes so the breakpoints can reach them.
+
+   2. Interaction that assumed a mouse. A touch device has no hover, and
+      worse, tapping an element can LEAVE it in :hover until the next tap
+      elsewhere, so a card sits there looking permanently picked. Every
+      decorative hover is fenced behind `@media (hover: hover)` and given a
+      `:active` counterpart, which is the state a finger can actually produce.
+   ===================================================================== */
+
+/* ---- grids that used to be pinned inline ---- */
+.split-contact { grid-template-columns: 1.5fr 1fr; align-items: start; }
+.svc-grid-3 { grid-template-columns: repeat(3, 1fr); }
+@media(max-width:980px){ .svc-grid-3{grid-template-columns:repeat(2,1fr)} }
+@media(max-width:880px){ .split-contact{grid-template-columns:1fr} }
+@media(max-width:680px){ .svc-grid-3{grid-template-columns:1fr} }
+
+/* ---- page chrome on a phone ---- */
+@media(max-width:720px){
+  .wrap{padding:0 20px}
+  /* 200px of dead space above the title on a 640px-tall screen */
+  .page-hero{padding:132px 0 56px}
+  .section.tight{padding:64px 0}
+  .sec-head{margin-bottom:40px}
+  .book-bar{padding:30px 24px;gap:24px}
+  .book-bar h2{max-width:none}
+  .footer{padding:56px 0 32px}
+  .foot-bottom{flex-direction:column;gap:10px}
+}
+
+/* Buttons are pill-shaped and sit in wrapping rows; at phone width two of them
+   break to one-and-a-bit lines and read as a mistake. Full width each. */
+@media(max-width:560px){
+  .pill-row .btn,.book-bar .btn,.takeover-cta .tk-btn{width:100%;justify-content:center}
+  .btn{padding:15px 24px}
+  .q-nav{flex-direction:column-reverse}
+  .q-nav .btn{width:100%;justify-content:center}
+  .tab-row{overflow-x:auto;scrollbar-width:none}
+  .tab-row::-webkit-scrollbar{display:none}
+  .tab-row button{flex:0 0 auto;white-space:nowrap;padding:14px 16px}
+}
+
+/* The blinds block scaled the WHOLE panel down with a transform, which shrinks
+   the pixels but not the 660px box they sit in — a phone got a small image
+   marooned in a tall empty panel, with the project list scaled to unreadable
+   along with it. The slats are built at a fixed 720x520 in JS and cannot be
+   re-flowed from CSS, so the scale stays — but it moves onto .blinds alone, and
+   the panel's height now tracks it so no dead space is left over. */
+.spotlight{--blind-scale:1}
+@media(max-width:820px){
+  .spotlight{--blind-scale:.72;transform:none;min-height:0;
+    height:calc(520px * var(--blind-scale) + 150px);padding:0 12px;flex-direction:column}
+  .blinds{transform:scale(var(--blind-scale));transform-origin:center;flex:0 0 auto}
+  .project-list{position:static;flex-direction:row;flex-wrap:wrap;justify-content:center;
+    gap:8px 14px;margin-top:calc(260px * (1 - var(--blind-scale)) + 16px)}
+  .project-list button{text-align:center;font-size:.78rem;opacity:.75}
+}
+@media(max-width:560px){
+  .spotlight{--blind-scale:.5}
+  .project-list button{font-size:.72rem}
+}
+
+/* The three.js CRT and the Spline hero are the two heaviest things on a phone;
+   neither needs to be full-bleed tall to make its point. */
+@media(max-width:768px){
+  .crt-hero{height:clamp(300px,52vh,440px)}
+  .crt-projects{bottom:1.2rem;gap:.4rem;padding:0 1rem}
+  .crt-projects li{font-size:.62rem;padding:.4rem .7rem}
+}
+
+/* ---- forms ---- */
+/* iOS zooms the page in whenever a focused field's text is under 16px, and
+   never zooms back out. Every field on the site is set smaller than that for
+   looks, so every field triggers it. */
+/* Applied to every field rather than a list of known ones: the review modal and
+   several admin forms style their inputs inline with no class to hook, and a
+   single field left under 16px is enough to zoom the whole page. Checkboxes and
+   radios are excluded — font-size is what sizes them in some browsers. */
+@media(pointer:coarse){
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,textarea{font-size:16px}
+}
+@media(max-width:600px){
+  .form-card{padding:24px 20px}
+  .quiz{padding:26px 20px}
+  .chat{height:min(70svh,520px)}
+  .chat-body{padding:18px}
+  .msg{max-width:90%}
+  .cinfo{padding:18px}
+  .opt{padding:16px 18px;font-size:.94rem}
+}
+
+/* ---- hover-only behaviour, fenced off from touch ---- */
+/* Lift-on-hover is the site's signature; on touch it either never fires or
+   sticks. Keep it for pointers, and give a finger a press state instead. */
+@media(hover:none){
+  .btn-gold:hover,.btn-ghost:hover,.card:hover,.svc:hover,.step:hover,
+  .post:hover,.tcard:hover,.advice-card:hover,.bento-feat .bento-card:hover,
+  .nav-cta:hover,.fab:hover,.foot-social a:hover,.foot-grid a:hover,
+  .tk-btn:hover,.opt:hover{transform:none;box-shadow:none}
+  .btn-gold:active,.nav-cta:active,.tk-btn:active{transform:scale(.98)}
+  .card:active,.svc:active,.step:active,.post:active,.tcard:active,
+  .advice-card:active,.bento-feat .bento-card:active{border-color:var(--line)}
+  .opt:active{border-color:var(--gold);background:rgba(23,63,99,.07)}
+  /* the label tooltip on the floating buttons can never be hovered on a phone */
+  .fab-label{display:none}
+  /* a paused-on-hover marquee never resumes if the pause was a stray touch */
+  .svc-marquee:hover .svc-marquee-track{animation-play-state:running}
+}
+/* Underline-grow on nav links relies on hover; a tapped link keeps it until
+   the next tap. Only the active route should stay underlined. */
+@media(hover:none){
+  .nav-links a:hover::after{width:0}
+  .nav-links a.active::after{width:100%}
+}
+
+/* Touch targets. 44px is the smallest reliably tappable box; several controls
+   here were sized purely by their text. */
+@media(pointer:coarse){
+  .burger{padding:12px}
+  .acc-q{padding:22px 0;min-height:44px}
+  .bm-chip,.pick,.chip-list li,.cond-list li{min-height:38px;display:inline-flex;align-items:center}
+  .qa-opt{padding:11px 22px}
+  .chat-quick button{min-height:38px}
+}
+
+/* ---- horizontal-scroll act ---- */
+/* .hpages-track is 200vw wide and scrubbed by GSAP. On a phone the second page
+   is unreachable if the scrub never runs, so it falls back to two stacked
+   full-height panels. */
+@media(max-width:768px){
+  .hpages{height:auto}
+  .hpages-track{width:100%;flex-direction:column;transform:none!important}
+  .hpage{flex:0 0 auto;width:100%;min-height:78svh;padding:64px 24px}
+  .hpage-1,.hpage-2{align-items:flex-start;text-align:left}
+  .hpage-1 .hp-lede{margin-left:0}
+  .hpages-hint{display:none}
+}
+
+/* ---- long copy ---- */
+@media(max-width:600px){
+  .display{font-size:clamp(2.4rem,11vw,3.6rem)}
+  .lede{font-size:1.02rem}
+  .hero-meta{gap:26px;margin-top:32px}
+  .portrait .ini{font-size:4.5rem}
+  .feature-list li{gap:12px}
+}
+
+/* Nothing should be able to push the page sideways. */
+@media(max-width:820px){
+  .takeover-grid,.hpage,.seq-overlay{max-width:100vw}
+  .marquee-track,.xtrack{will-change:transform}
+}
+
+
+/* ---- services showcase on a phone ---- */
+/* .svc-back is absolutely positioned at top:15svh and the content block starts
+   at padding-top:15svh — on a wide screen the button sits left of the kicker,
+   but once the heading goes full width they land on the same line and overlap.
+   Below 1000px the button moves above the content and the content follows it. */
+@media(max-width:1000px){
+  .svc-back{top:11svh;padding:10px 18px;font-size:.72rem}
+  .svc-detail-content{padding:19svh 1.5rem 4svh}
+}
+@media(max-width:768px){
+  .svc-marquee-wrap{padding:15svh 0 3rem}
+  .svc-marquee-head{margin-bottom:2rem;padding:0 20px}
+  .svc-mq{width:clamp(220px,72vw,300px)}
+  .svc-marquee-track{gap:1rem}
+  .svc-marquee-hint{margin-top:1.6rem;font-size:.64rem;letter-spacing:.18em}
+  .svc-detail-head h1{font-size:clamp(1.5rem,5.6vw,2.2rem)}
+  .svc-detail-conds{gap:7px}
+  .svc-detail-conds span{padding:6px 12px;font-size:.72rem}
+  .svc-detail-label{margin-bottom:.7rem}
+}
+
+/* ---- footer ---- */
+@media(max-width:520px){
+  .foot-grid{gap:32px;margin-bottom:36px}
+  .foot-brand p{max-width:none}
+  .foot-grid h4{margin-bottom:14px}
+  .foot-grid a{margin-bottom:11px}
+}
+
+/* ---- the pinned FAQ takeover ---- */
+/* BlueTakeover skips its ScrollTrigger under 768px and paints the end state
+   directly, so the panel must be able to hold every FAQ at once rather than
+   relying on a 100svh pin. */
+@media(max-width:768px){
+  .takeover{height:auto;min-height:100svh}
+  .takeover-grid{padding:12svh 20px 8svh;gap:2rem}
+  .takeover-title{font-size:clamp(1.7rem,7vw,2.4rem);max-width:none}
+  .takeover-faq{gap:1.1rem}
+  .tk-faq{padding-left:.9rem}
+  .tk-faq p{max-width:none}
+}
+
+/* ---- the scratch card's neighbours ---- */
+@media(max-width:600px){
+  .smudge-zone .wrap{padding:0 14px}
 }
