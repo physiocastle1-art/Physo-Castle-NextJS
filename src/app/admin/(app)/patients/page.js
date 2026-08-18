@@ -1,14 +1,22 @@
 import Link from "next/link";
+import { requireUser, hasRole } from "@/lib/auth";
 import { listPatients } from "@/lib/clinic";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { formatPhone } from "@/lib/validation";
 import PatientFilters from "@/components/admin/PatientFilters";
 import PatientSearch from "@/components/admin/PatientSearch";
+import PatientRowActions from "@/components/admin/PatientRowActions";
 import { Card, Empty, Meter, PageHeader, PatientBadge } from "@/components/admin/ui";
 
 export const metadata = { title: "Patients — Physio Castle Admin" };
 
 export default async function PatientsPage({ searchParams }) {
+  /* Deleting is admin-and-above. The layout has already established there IS a
+     signed-in user; this re-reads them only to learn the role, and the DELETE
+     route enforces the same bar server-side regardless of what renders. */
+  const user = await requireUser();
+  const canDelete = hasRole(user, "admin");
+
   const status = searchParams?.status || "";
   const dues = searchParams?.dues || "";
   const page = Number(searchParams?.page) || 1;
@@ -120,14 +128,7 @@ export default async function PatientsPage({ searchParams }) {
                           )}
                         </td>
                         <td className="shrink">
-                          <div className="adm-row-actions">
-                            <Link href={`/admin/patients/${p.slug || p._id}`} className="adm-btn adm-btn-ghost adm-btn-sm" title="View Record & SOAP Notes">
-                              📋 SOAP Notes
-                            </Link>
-                            <a href={`/admin/patients/${p.slug || p._id}/invoice`} target="_blank" rel="noreferrer" className="adm-btn adm-btn-ghost adm-btn-sm" title="Print Receipt / Invoice">
-                              🖨️ Invoice
-                            </a>
-                          </div>
+                          <PatientRowActions patient={p} canDelete={canDelete} />
                         </td>
                       </tr>
                     ))}

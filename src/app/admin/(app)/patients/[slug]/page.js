@@ -16,7 +16,7 @@ export async function generateMetadata({ params }) {
   return { title: data ? `${data.patient.name} — Physio Castle Admin` : "Patient not found" };
 }
 
-export default async function PatientDetailPage({ params }) {
+export default async function PatientDetailPage({ params, searchParams }) {
   const user = await requireUser();
 
   // Resolves a slug, and still accepts a raw _id so older links keep working.
@@ -116,7 +116,12 @@ export default async function PatientDetailPage({ params }) {
           />
         </div>
 
-        <PatientPanel patient={patient} packages={packages} canDelete={canDelete} />
+        <PatientPanel
+          patient={patient}
+          packages={packages}
+          canDelete={canDelete}
+          defaultEditing={searchParams?.edit === "1"}
+        />
       </div>
     </>
   );

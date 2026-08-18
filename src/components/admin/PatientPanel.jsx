@@ -7,9 +7,16 @@ import { Alert, Card, DataItem } from "@/components/admin/ui";
 import { GENDER_LABEL, formatDate, formatMoney } from "@/lib/format";
 import { formatPhone } from "@/lib/validation";
 
-export default function PatientPanel({ patient, packages = [], canDelete }) {
+/* `defaultEditing` comes from ?edit=1 in the URL, which is what the Edit
+   button on the patients list links to — so that button lands on the open form
+   instead of on a collapsed panel the user then has to find and expand.
+
+   The flag is read on the server and passed down as a prop rather than pulled
+   from useSearchParams(), so there is no client-side hook to suspend on and
+   the first paint already has the editor open. */
+export default function PatientPanel({ patient, packages = [], canDelete, defaultEditing = false }) {
   const router = useRouter();
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState(defaultEditing);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -33,6 +40,7 @@ export default function PatientPanel({ patient, packages = [], canDelete }) {
 
   return (
     <Card
+      id="patient-details"
       title="Patient details"
       action={
         <div className="adm-inline">

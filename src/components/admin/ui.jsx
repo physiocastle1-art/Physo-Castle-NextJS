@@ -25,9 +25,9 @@ export function Stat({ label, value, hint, tone = "" }) {
   );
 }
 
-export function Card({ title, subtitle, action, children, tight = false }) {
+export function Card({ title, subtitle, action, children, tight = false, id = undefined }) {
   return (
-    <section className="adm-card">
+    <section className="adm-card" id={id}>
       {title || action ? (
         <header className="adm-card-head">
           <div>
