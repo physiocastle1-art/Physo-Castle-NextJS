@@ -1,6 +1,5 @@
 import "server-only";
-import { Resend } from "resend";
-import nodemailer from "nodemailer";
+import { sendMail } from "@/lib/mail";
 
 /* Everything below arrives from an UNAUTHENTICATED public form, and is dropped
    straight into an HTML email the clinic opens. Escaped so a submitted
@@ -21,12 +20,13 @@ const escList = (v) =>
 const escHeader = (v) => String(v ?? "").replace(/[\r\n]+/g, " ").trim().slice(0, 200);
 
 export async function sendLeadEmail(leadData) {
-  /* Server-only. NEVER read a NEXT_PUBLIC_* variable for a secret: Next inlines
-     every NEXT_PUBLIC_ value into the client bundle, so the key would be
-     readable by anyone who opens devtools. */
-  const apiKey = process.env.RESEND_API_KEY;
-  const clinicEmail = process.env.CLINIC_LEAD_EMAIL || process.env.RESEND_TO_EMAIL || "physiocastle1@gmail.com";
-  const fromEmail = process.env.EMAIL_FROM || "onboarding@resend.dev";
+  /* Where the lead lands. The provider itself (Resend, then SMTP, then a
+     console fallback) is configured once in lib/mail.js — including the rule
+     that a secret is NEVER read from a NEXT_PUBLIC_* variable, since Next
+     inlines those into the client bundle. */
+  const clinicEmail =
+    process.env.CLINIC_LEAD_EMAIL || process.env.RESEND_TO_EMAIL || "physiocastle1@gmail.com";
+  const lead = leadData || {};
   const {
     name,
     age,
@@ -139,50 +139,42 @@ export async function sendLeadEmail(leadData) {
     </html>
   `;
 
-  // 1. Try Resend if API Key is configured
-  if (apiKey) {
-    try {
-      const resend = new Resend(apiKey);
-      const resendResult = await resend.emails.send({
-        from: fromEmail,
-        to: [clinicEmail],
-        subject,
-        html: htmlContent,
-      });
-      console.log("[Resend] Lead email sent successfully:", resendResult);
-      return { success: true, provider: "resend", data: resendResult };
-    } catch (err) {
-      console.error("[Resend Error] Failed to send email via Resend:", err);
-    }
+  /* A plain-text alternative, so the lead is still readable in a client that
+     refuses HTML and so spam filters see a multipart message rather than a
+     lone HTML blob. */
+  const textContent = [
+    `New ${lead.type} from the website`,
+    "",
+    `Name:     ${lead.name}`,
+    `Phone:    ${lead.phone}`,
+    lead.age ? `Age:      ${lead.age}` : null,
+    lead.gender ? `Gender:   ${lead.gender}` : null,
+    lead.address ? `Address:  ${lead.address}` : null,
+    `Areas:    ${formattedParts}`,
+    lead.complaint ? `Complaint: ${lead.complaint}` : null,
+    `Timings:  ${formattedSlots}`,
+    lead.notes ? `\nNotes:\n${lead.notes}` : null,
+  ]
+    .filter((v) => v !== null)
+    .join("\n");
+
+  const result = await sendMail({
+    to: clinicEmail,
+    subject,
+    body: textContent,
+    html: htmlContent,
+  });
+
+  /* Deliberately not thrown. The visitor filled in a form and is owed a
+     "we'll call you back"; whether our mail provider accepted the message is
+     our problem, and sendMail() has already logged the lead to the server
+     console when nothing could deliver it, so it is never simply lost. */
+  if (!result.delivered) {
+    console.error("[lead] could not deliver the lead email — it is logged above.", {
+      name: lead.name,
+      phone: lead.phone,
+    });
   }
 
-  // 2. Try Nodemailer if SMTP parameters are configured
-  if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
-    try {
-      const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: Number(process.env.SMTP_PORT) || 587,
-        secure: process.env.SMTP_SECURE === "true",
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS,
-        },
-      });
-
-      const smtpResult = await transporter.sendMail({
-        from: fromEmail,
-        to: clinicEmail,
-        subject,
-        html: htmlContent,
-      });
-      console.log("[Nodemailer SMTP] Lead email sent successfully:", smtpResult);
-      return { success: true, provider: "nodemailer", data: smtpResult };
-    } catch (err) {
-      console.error("[Nodemailer Error] Failed to send email via SMTP:", err);
-    }
-  }
-
-  // 3. Fallback log if neither API key/SMTP is set yet
-  console.log("[Email Service] No RESEND_API_KEY or SMTP credentials configured yet in .env.local. Lead received:", leadData);
-  return { success: true, provider: "logger_fallback" };
+  return { success: result.delivered, provider: result.transport, id: result.id ?? null };
 }

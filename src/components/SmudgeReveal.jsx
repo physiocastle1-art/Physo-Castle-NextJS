@@ -66,7 +66,12 @@ export default function SmudgeReveal() {
       const t = e.touches[0];
       if (!t) return;
       const r = hero.getBoundingClientRect();
-      onMove(t.clientX - r.left, t.clientY - r.top);
+      const x = t.clientX - r.left;
+      const y = t.clientY - r.top;
+      onMove(x, y);
+      if (e.type === "touchstart") {
+        stamp(x, y, coarse ? 45 : 35);
+      }
     };
     hero.addEventListener("mousemove", mouse);
     hero.addEventListener("touchstart", touch, { passive: true });
@@ -135,7 +140,7 @@ export default function SmudgeReveal() {
             <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 60 -14" />
           </filter>
         </defs>
-        <mask id="smudge-mask">
+        <mask id="smudge-mask" maskUnits="userSpaceOnUse" maskContentUnits="userSpaceOnUse" x="0" y="0" width="100%" height="100%">
           <g ref={blobsRef} className="smudge-blobs" filter="url(#smudge-goo)" />
         </mask>
       </svg>

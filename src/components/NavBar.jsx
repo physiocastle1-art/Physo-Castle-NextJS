@@ -72,10 +72,10 @@ export default function NavBar() {
         </Link>
 
         <div className={"nav-links" + (open ? " open" : "")}>
-          <Link href="/" className={pathname === "/" ? "active" : ""}>
+          <Link href="/" className={pathname === "/" ? "active" : ""} onClick={() => setOpen(false)}>
             Home
           </Link>
-          <Link href="/about" className={pathname === "/about" ? "active" : ""}>
+          <Link href="/about" className={pathname === "/about" ? "active" : ""} onClick={() => setOpen(false)}>
             About
           </Link>
 
@@ -91,7 +91,7 @@ export default function NavBar() {
                 was only reachable by hitting the arrow glyph itself. They are
                 siblings now: the label goes to /services, the arrow expands. */}
             <div className={`nav-dropdown-trigger ${pathname.startsWith("/services") ? "active" : ""}`}>
-              <Link href="/services" className="nav-dropdown-label">
+              <Link href="/services" className="nav-dropdown-label" onClick={() => setOpen(false)}>
                 Services
               </Link>
               <button
@@ -116,7 +116,10 @@ export default function NavBar() {
                       key={s.slug}
                       href={`/services#svc-${s.slug}`}
                       className="nav-dropdown-item"
-                      onClick={() => setServicesOpen(false)}
+                      onClick={() => {
+                        setServicesOpen(false);
+                        setOpen(false);
+                      }}
                     >
                       <span className="nav-dropdown-ico">{s.icon}</span>
                       <div className="nav-dropdown-text">
@@ -127,7 +130,13 @@ export default function NavBar() {
                   ))}
                 </div>
                 <div className="nav-dropdown-footer">
-                  <Link href="/services" onClick={() => setServicesOpen(false)}>
+                  <Link
+                    href="/services"
+                    onClick={() => {
+                      setServicesOpen(false);
+                      setOpen(false);
+                    }}
+                  >
                     View All Services &amp; Packages <span className="arw">→</span>
                   </Link>
                 </div>
@@ -135,22 +144,22 @@ export default function NavBar() {
             ) : null}
           </div>
 
-          <Link href="/symptoms" className={pathname === "/symptoms" ? "active" : ""}>
+          <Link href="/symptoms" className={pathname === "/symptoms" ? "active" : ""} onClick={() => setOpen(false)}>
             Symptom Check
           </Link>
-          <Link href="/testimonials" className={pathname === "/testimonials" ? "active" : ""}>
+          <Link href="/testimonials" className={pathname === "/testimonials" ? "active" : ""} onClick={() => setOpen(false)}>
             Reviews
           </Link>
-          <Link href="/blog" className={pathname === "/blog" ? "active" : ""}>
+          <Link href="/blog" className={pathname === "/blog" ? "active" : ""} onClick={() => setOpen(false)}>
             Journal
           </Link>
-          <Link href="/contact" className={pathname === "/contact" ? "active" : ""}>
+          <Link href="/contact" className={pathname === "/contact" ? "active" : ""} onClick={() => setOpen(false)}>
             Contact
           </Link>
 
           {/* .nav-cta is display:none under 920px — this is the same action,
               styled for the panel, so the primary CTA survives on a phone */}
-          <Link href="/contact" className="nav-links-cta">
+          <Link href="/contact" className="nav-links-cta" onClick={() => setOpen(false)}>
             Book Appointment
           </Link>
         </div>

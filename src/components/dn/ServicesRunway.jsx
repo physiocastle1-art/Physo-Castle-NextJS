@@ -49,20 +49,88 @@ export default function ServicesRunway() {
     const track = trackRef.current;
     if (!wrap || !track) return;
 
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let currentX = 0;
+    let startTrackX = 0;
+    let isSwiping = false;
+    let isHorizontalGesture = false;
+
+    const getTravel = () => Math.max(track.scrollWidth - track.clientWidth, 0);
+
     const scrub = new Spring(0, SCRUB_CONFIG, (x) => {
+      currentX = x;
       track.style.transform = `translate3d(${x.toFixed(2)}px,0,0)`;
     });
 
     const unsub = subscribe(() => {
+      if (isSwiping) return;
       const vh = window.innerHeight;
       const scrubbable = wrap.offsetHeight - vh * (1 + OVERLAY_VIEWPORTS + DWELL_VIEWPORTS);
       if (scrubbable <= 0) return;
       const p = clamp(-wrap.getBoundingClientRect().top / scrubbable, 0, 1);
-      const travel = Math.max(track.scrollWidth - track.clientWidth, 0);
+      const travel = getTravel();
       scrub.set(-p * travel);
     });
 
-    return () => { unsub(); scrub.stop(); };
+    const onTouchStart = (e) => {
+      if (e.touches.length !== 1) return;
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+      startTrackX = currentX;
+      isSwiping = true;
+      isHorizontalGesture = false;
+    };
+
+    const onTouchMove = (e) => {
+      if (!isSwiping || e.touches.length !== 1) return;
+      const dx = e.touches[0].clientX - touchStartX;
+      const dy = e.touches[0].clientY - touchStartY;
+
+      if (!isHorizontalGesture) {
+        if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 6) {
+          isHorizontalGesture = true;
+        }
+      }
+
+      if (isHorizontalGesture) {
+        const travel = getTravel();
+        const nextX = clamp(startTrackX + dx * 1.25, -travel, 0);
+        scrub.set(nextX);
+      }
+    };
+
+    const onTouchEnd = () => {
+      if (!isSwiping) return;
+      isSwiping = false;
+      if (isHorizontalGesture) {
+        const travel = getTravel();
+        if (travel > 0) {
+          const vh = window.innerHeight;
+          const scrubbable = wrap.offsetHeight - vh * (1 + OVERLAY_VIEWPORTS + DWELL_VIEWPORTS);
+          if (scrubbable > 0) {
+            const p = clamp(-currentX / travel, 0, 1);
+            const wrapTop = wrap.getBoundingClientRect().top + window.scrollY;
+            const targetScrollTop = wrapTop + p * scrubbable;
+            window.scrollTo({ top: targetScrollTop, behavior: "smooth" });
+          }
+        }
+      }
+    };
+
+    track.addEventListener("touchstart", onTouchStart, { passive: true });
+    track.addEventListener("touchmove", onTouchMove, { passive: true });
+    track.addEventListener("touchend", onTouchEnd, { passive: true });
+    track.addEventListener("touchcancel", onTouchEnd, { passive: true });
+
+    return () => {
+      unsub();
+      scrub.stop();
+      track.removeEventListener("touchstart", onTouchStart);
+      track.removeEventListener("touchmove", onTouchMove);
+      track.removeEventListener("touchend", onTouchEnd);
+      track.removeEventListener("touchcancel", onTouchEnd);
+    };
   }, []);
 
   return (

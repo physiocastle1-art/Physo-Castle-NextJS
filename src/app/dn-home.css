@@ -194,7 +194,7 @@ body:has(.dn-sec) .nav.scrolled {
   display: flex; flex-direction: column; gap: 1.2rem;
   padding: 7rem 1.25rem 2rem;
 }
-.dn-svc__rail { position: relative; flex: 1 1 auto; overflow: hidden; }
+.dn-svc__rail { position: relative; flex: 1 1 auto; overflow: hidden; touch-action: pan-x pan-y; }
 .dn-svc__track { display: flex; gap: calc(0.625 * var(--u)); height: 100%; will-change: transform; }
 
 .dn-card {
