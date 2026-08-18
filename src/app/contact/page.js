@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import Reveal from "@/components/Reveal";
 import BookingForm from "@/components/BookingForm";
@@ -19,7 +20,14 @@ export default function Contact() {
       <section className="section tight">
         <div className="wrap">
           <div className="split split-contact">
-            <Reveal><BookingForm /></Reveal>
+            {/* BookingForm reads ?parts= from the symptom check via
+                useSearchParams, which needs a boundary for this page to stay
+                statically prerendered rather than becoming request-rendered. */}
+            <Reveal>
+              <Suspense fallback={<div className="form-card" style={{ minHeight: 620 }} />}>
+                <BookingForm />
+              </Suspense>
+            </Reveal>
             <Reveal delay={1} className="contact-aside">
               <div className="cinfo"><div className="ic">✆</div><div><b>Call or WhatsApp</b><p>+91 95123 46056<br />Mon–Sat, 8am – 8pm</p></div></div>
               <div className="cinfo"><div className="ic">✉</div><div><b>Email</b><p>hello@physiocastle.com</p></div></div>

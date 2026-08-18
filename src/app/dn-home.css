@@ -525,8 +525,16 @@ body:has(.dn-sec) .nav.scrolled {
 .dn-ig__ghost:hover { border-color: var(--dn-brand-500); }
 
 @media (max-width: 639px) {
-  .dn-ig { --dn-ig-cap: 360px; }
+  /* One card per row here, so there is no neighbour to stay level with and the
+     cap has no layout job left — it only hid the post. Measured at this width:
+     an Instagram embed renders 619px tall against the old 360px cap, cropping
+     42% of every card, the bottom of the photo included. The wall exists to
+     show the pictures, so the cap comes off. */
+  .dn-ig { --dn-ig-cap: none; }
   .dn-ig__grid { max-width: 330px; margin-inline: auto; }
+  /* With nothing clipped, the fade that disguised the cut has nothing to
+     disguise and would only haze the embed's action bar. */
+  .dn-ig__cell::after { display: none; }
 }
 
 @media (min-width: 640px) {

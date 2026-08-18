@@ -1,11 +1,32 @@
 "use client";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 const BODY_PARTS = ["Shoulder", "Elbow", "Wrist / Fingers", "Neck", "Upper Back", "Lower Back", "Hip", "Knee", "Ankle / Feet"];
 const SLOTS = ["Morning · 8–11 am", "Midday · 11 am–1 pm", "Afternoon · 1–4 pm", "Evening · 4–7 pm", "Late evening · 7–9 pm"];
 const GENDERS = ["Female", "Male", "Other", "Prefer not to say"];
 
 export default function BookingForm() {
+  /* The symptom check sends what the visitor selected here as ?parts=. Without
+     this they had to find and re-enter it, having already told us once.
+
+     Anything that is not one of BODY_PARTS — "Sciatica", "Plantar fasciitis" —
+     is added to the picker as its own chip rather than dropped, so what arrives
+     is exactly what they chose, still visible and still switchable off. */
+  const searchParams = useSearchParams();
+  const carried = useMemo(() => {
+    const raw = searchParams.get("parts");
+    if (!raw) return [];
+    const seen = raw.split(",").map((v) => v.trim()).filter(Boolean);
+    // Deduped and bounded: the value is user-editable in the address bar.
+    return [...new Set(seen)].slice(0, 20).map((v) => v.slice(0, 80));
+  }, [searchParams]);
+
+  const partOptions = useMemo(
+    () => [...BODY_PARTS, ...carried.filter((c) => !BODY_PARTS.includes(c))],
+    [carried]
+  );
+
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -17,7 +38,8 @@ export default function BookingForm() {
   const [address, setAddress] = useState("");
   const [notes, setNotes] = useState("");
 
-  const [parts, setParts] = useState([]);
+  // Lazy initial value: whatever arrived is already ticked on first paint.
+  const [parts, setParts] = useState(() => carried);
   const [bookSlots, setBookSlots] = useState([]);
 
   const toggle = (setter) => (val) =>
@@ -66,6 +88,7 @@ export default function BookingForm() {
         <Ok
           title="Request received"
           msg="Thank you — we've received your booking details and will confirm your visit slot within 24 hours by call or WhatsApp."
+          items={parts}
         />
       ) : (
         <form onSubmit={submit}>
@@ -102,9 +125,13 @@ export default function BookingForm() {
 
           <div className="field">
             <label>Complaint — where is the pain?</label>
-            <p className="pick-hint">Select the area(s) troubling you.</p>
+            <p className="pick-hint">
+              {carried.length
+                ? "Carried over from your symptom check — add or remove anything."
+                : "Select the area(s) troubling you."}
+            </p>
             <div className="pick-grid">
-              {BODY_PARTS.map((p) => (
+              {partOptions.map((p) => (
                 <button
                   type="button"
                   key={p}
@@ -160,12 +187,20 @@ function Field({ label, children }) {
     </div>
   );
 }
-function Ok({ title, msg }) {
+function Ok({ title, msg, items = [] }) {
   return (
     <div className="form-ok">
       <div className="ico">✓</div>
       <h3 style={{ fontSize: "1.6rem" }}>{title}</h3>
       <p className="muted mt-s">{msg}</p>
+      {/* Reading back what was sent, so the visitor can see their symptom-check
+          selections actually made it into the request. */}
+      {items.length ? (
+        <div className="form-ok-items">
+          <span>We noted</span>
+          <div>{items.map((i) => <b key={i}>{i}</b>)}</div>
+        </div>
+      ) : null}
     </div>
   );
 }

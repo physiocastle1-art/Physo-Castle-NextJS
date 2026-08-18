@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Chatbot from "@/components/Chatbot";
 
@@ -9,6 +9,38 @@ const WHATSAPP = "919512346056"; // +91 95123 46056 — update if the number cha
 
 export default function FloatingActions() {
   const [chatOpen, setChatOpen] = useState(false);
+  const botVideoRef = useRef(null);
+
+  /* The bot loop is decorative and must simply run. A <video> whose autoplay is
+     refused renders as a play button, which is what was showing on phones.
+
+     Two causes, both handled here. The clip was 2 MB of 1280x720 with an audio
+     track for a 58px circle, so on mobile data it had not buffered by the time
+     the visitor arrived — it is now 28 KB of 192x192 with no audio. And iOS Low
+     Power Mode and Android Data Saver refuse autoplay outright whatever the
+     size, so playback is nudged on mount and again on the first touch, which is
+     a user gesture and always permitted. The poster means the worst case is a
+     still of the bot rather than an empty circle.
+
+     The element is remounted whenever the panel closes, hence chatOpen here. */
+  useEffect(() => {
+    const video = botVideoRef.current;
+    if (!video) return undefined;
+
+    // Set as a property too: the attribute alone is not enough in every engine,
+    // and an unmuted video is refused autoplay on every mobile browser.
+    video.muted = true;
+
+    const tryPlay = () => {
+      const attempt = video.play();
+      // Rejects when the policy refuses; nothing to do but leave the poster up.
+      if (attempt?.catch) attempt.catch(() => {});
+    };
+
+    tryPlay();
+    window.addEventListener("touchstart", tryPlay, { once: true, passive: true });
+    return () => window.removeEventListener("touchstart", tryPlay);
+  }, [chatOpen]);
 
   return (
     <>
@@ -31,7 +63,19 @@ export default function FloatingActions() {
           {chatOpen ? (
             <span className="fab-bot-x" aria-hidden="true">✕</span>
           ) : (
-            <video className="fab-bot-vid" src="/bot-wave.mp4" autoPlay loop muted playsInline aria-hidden="true" />
+            <video
+              ref={botVideoRef}
+              className="fab-bot-vid"
+              src="/bot-wave.mp4"
+              poster="/bot-wave-poster.jpg"
+              autoPlay
+              loop
+              muted
+              playsInline
+              preload="auto"
+              disablePictureInPicture
+              aria-hidden="true"
+            />
           )}
         </button>
 

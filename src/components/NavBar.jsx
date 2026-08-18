@@ -71,7 +71,7 @@ export default function NavBar() {
           <b>Physio</b>&nbsp;<span>Castle</span>
         </Link>
 
-        <div className={"nav-links" + (open ? " open" : "")}>
+        <div id="primary-nav" className={"nav-links" + (open ? " open" : "")}>
           <Link href="/" className={pathname === "/" ? "active" : ""} onClick={() => setOpen(false)}>
             Home
           </Link>
@@ -168,8 +168,11 @@ export default function NavBar() {
           Book Appointment
         </Link>
         <button
+          type="button"
           className={"burger" + (open ? " open" : "")}
-          aria-label="Menu"
+          aria-label={open ? "Close menu" : "Open menu"}
+          aria-expanded={open}
+          aria-controls="primary-nav"
           onClick={() => setOpen((o) => !o)}
         >
           <span></span>

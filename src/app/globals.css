@@ -97,6 +97,15 @@ h2.title em{font-style:italic;color:var(--gold)}
 .burger.open span:nth-child(2){opacity:0}
 .burger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
 @media(max-width:920px){
+  /* .nav.scrolled carries a backdrop-filter, and an element with one becomes
+     the containing block for its position:fixed descendants. That pinned
+     .nav-links to the ~56px bar instead of the viewport, so past 40px of
+     scroll the burger opened the menu into a sliver — measured 500x46 where
+     the viewport was 500x757. At the very top of the page, with .scrolled not
+     yet applied, it opened correctly, which is why it looked intermittent.
+     The blur is decorative and the menu is not, so small screens drop the
+     filter and lean on opacity for the same effect. */
+  .nav.scrolled{backdrop-filter:none;-webkit-backdrop-filter:none;background:rgba(244,238,226,.96)}
   /* Keep brand logo and burger toggle above the overlay drawer */
   .brand{position:relative;z-index:102}
   .burger{display:flex;position:relative;z-index:102}
@@ -109,8 +118,12 @@ h2.title em{font-style:italic;color:var(--gold)}
     -webkit-backdrop-filter:blur(20px);gap:18px;
     padding:calc(80px + env(safe-area-inset-top)) 26px calc(32px + env(safe-area-inset-bottom));
     overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
-    transform:translateX(100%);transition:.6s var(--ease)}
-  .nav-links.open{transform:translateX(0)}
+    transform:translateX(100%);visibility:hidden;transition:.6s var(--ease)}
+  /* translateX alone only moves the panel off-screen: every link in it stayed
+     in the tab order and readable by a screen reader while the menu was shut.
+     visibility takes it out of both. It is transitioned rather than toggled so
+     the panel stays visible for the whole slide-out. */
+  .nav-links.open{transform:translateX(0);visibility:visible}
   .nav-links a{font-size:1.4rem;font-family:var(--serif);padding:4px 0}
   .nav-links a::after{bottom:0}
   /* the label takes the row and pushes the arrow button to the far edge */
@@ -1032,8 +1045,39 @@ h2.title em{font-style:italic;color:var(--gold)}
 .bm-detail{animation:bmIn .4s var(--ease) both}
 @keyframes bmIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 .bm-conds{list-style:none;padding:0;margin:20px 0 0;display:flex;flex-wrap:wrap;gap:9px}
-.bm-conds li{font-size:.82rem;font-weight:500;color:var(--ink);padding:7px 13px;border-radius:100px;
-  background:var(--surface);border:1px solid var(--line)}
+/* These were <li>. They are <button> now — same pill, plus a selected state and
+   a 40px tap target, since choosing one is what carries it to the booking form. */
+.bm-cond{font-family:var(--sans);font-size:.82rem;font-weight:500;color:var(--ink);
+  padding:9px 15px;border-radius:100px;background:var(--surface);border:1px solid var(--line);
+  cursor:pointer;transition:.25s var(--ease);min-height:40px;display:inline-flex;align-items:center}
+.bm-cond:hover{border-color:var(--gold);color:var(--gold)}
+.bm-cond.on{background:var(--gold);border-color:var(--gold);color:#fff}
+.bm-cond.on::before{content:"✓";margin-right:7px;font-size:.76rem}
+.bm-cond:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.bm-conds-hint{font-size:.78rem!important;color:var(--muted);margin-top:10px!important}
+
+/* The running selection. Sits below the detail so it survives moving between
+   areas, and every chip removes itself. */
+/* Read-back of what was submitted, under the booking confirmation. */
+.form-ok-items{margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}
+.form-ok-items>span{display:block;font-family:var(--sans);font-size:.66rem;font-weight:600;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin-bottom:9px}
+.form-ok-items>div{display:flex;flex-wrap:wrap;gap:7px;justify-content:center}
+.form-ok-items b{font-family:var(--sans);font-size:.78rem;font-weight:500;color:var(--ink);
+  padding:6px 12px;border-radius:100px;background:var(--surface);border:1px solid var(--line)}
+
+.bm-picked{margin-top:24px;padding-top:18px;border-top:1px solid var(--line)}
+.bm-picked-lbl{display:block;font-family:var(--sans);font-size:.66rem;font-weight:600;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
+.bm-picked-chips{display:flex;flex-wrap:wrap;gap:8px}
+.bm-picked-chip{font-family:var(--sans);font-size:.78rem;font-weight:500;color:var(--ink);
+  padding:8px 12px;border-radius:100px;background:rgba(42,82,59,.08);
+  border:1px solid rgba(42,82,59,.22);cursor:pointer;transition:.25s var(--ease);
+  min-height:38px;display:inline-flex;align-items:center;gap:8px}
+.bm-picked-chip span{font-size:1rem;line-height:1;opacity:.55}
+.bm-picked-chip:hover{border-color:var(--gold);color:var(--gold)}
+.bm-picked-chip:hover span{opacity:1}
+.bm-picked-chip:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 .bm-service{margin-top:22px;padding-top:18px;border-top:1px solid var(--line);
   display:flex;flex-direction:column;gap:3px}
 .bm-service-lbl{font-family:var(--sans);font-size:.68rem;font-weight:600;letter-spacing:.16em;
@@ -1045,6 +1089,7 @@ h2.title em{font-style:italic;color:var(--gold)}
   .bodymap-panel{min-height:0;text-align:center}
   .bm-empty p,.bm-detail p{margin-left:auto;margin-right:auto}
   .bm-conds{justify-content:center}
+  .bm-picked-chips{justify-content:center}
   .bm-service{align-items:center}
   .pill-row{justify-content:center}
   /* no hover on touch — keep the resting figure clean, the pins + chips carry it */

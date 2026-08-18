@@ -105,8 +105,26 @@ const FIGURE =
 export default function BodyMap() {
   const [active, setActive] = useState(null);
   const [hover, setHover] = useState(null);
+  /* The conditions listed under an area used to be plain text, so having found
+     "Sciatica" here a visitor still had to describe it again on the booking
+     form. They are buttons now, and what is chosen accumulates ACROSS areas —
+     switching from hips to knees keeps what the hips contributed, because a
+     body rarely hurts in one place only. */
+  const [picked, setPicked] = useState([]);
   const sel = active ? REGIONS[active] : null;
   const shown = hover || active;
+
+  const togglePicked = (condition) =>
+    setPicked((cur) =>
+      cur.includes(condition) ? cur.filter((c) => c !== condition) : [...cur, condition]
+    );
+
+  /* The selection rides to the booking form in the URL rather than in storage:
+     it survives a reload, it can be shared or bookmarked, and the form can read
+     it on first render instead of flashing an empty picker. */
+  const bookHref = picked.length
+    ? `/contact?parts=${encodeURIComponent(picked.join(","))}`
+    : "/contact";
 
   return (
     <div className="bodymap">
@@ -200,20 +218,61 @@ export default function BodyMap() {
             <span className="eyebrow">Suggested for you</span>
             <h3>{sel.label}</h3>
             <p>{sel.blurb}</p>
-            <ul className="bm-conds">
-              {sel.conditions.map((c) => <li key={c}>{c}</li>)}
-            </ul>
+            <div className="bm-conds" role="group" aria-label={`Common issues we treat in: ${sel.label}`}>
+              {sel.conditions.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  className={"bm-cond" + (picked.includes(c) ? " on" : "")}
+                  aria-pressed={picked.includes(c)}
+                  onClick={() => togglePicked(c)}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+            <p className="bm-conds-hint">Tap what applies — it comes with you to the booking form.</p>
             <div className="bm-service">
               <span className="bm-service-lbl">Recommended care</span>
               <strong>{sel.service}</strong>
             </div>
             <div className="pill-row" style={{ marginTop: 22 }}>
-              <Link href="/contact" className="btn btn-gold">Book an assessment <span className="arw">→</span></Link>
+              <Link href={bookHref} className="btn btn-gold">Book an assessment <span className="arw">→</span></Link>
               <Link href={sel.href} className="btn btn-ghost">See this service</Link>
             </div>
             <button type="button" className="bm-reset" onClick={() => setActive(null)}>Choose a different area</button>
           </div>
         )}
+
+        {/* Kept outside the detail above so the running selection stays on
+            screen while moving between areas, and after closing one. */}
+        {picked.length > 0 ? (
+          <div className="bm-picked">
+            <span className="bm-picked-lbl">
+              Selected · {picked.length}
+            </span>
+            <div className="bm-picked-chips">
+              {picked.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  className="bm-picked-chip"
+                  onClick={() => togglePicked(c)}
+                  aria-label={`Remove ${c}`}
+                >
+                  {c}<span aria-hidden="true">×</span>
+                </button>
+              ))}
+            </div>
+            {/* The open detail already carries a Book button; without one open
+                this is the only way through, so it appears just then. */}
+            {!sel ? (
+              <Link href={bookHref} className="btn btn-gold" style={{ marginTop: 16 }}>
+                Book with these <span className="arw">→</span>
+              </Link>
+            ) : null}
+          </div>
+        ) : null}
       </div>
     </div>
   );
